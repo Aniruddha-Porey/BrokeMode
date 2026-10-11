@@ -1,0 +1,21 @@
+# Dependencies and generated build output
+node_modules/
+dist/
+coverage/
+.npm/
+.vite/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+
+# Editor/OS and logs
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+*.log
+
+# Uploaded prompt/reference files (keep app assets under public/)
+/uploads/

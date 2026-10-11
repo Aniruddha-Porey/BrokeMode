@@ -15,7 +15,7 @@ npm install
 npm run dev
 ```
 
-Vite prints a local URL. The dev server is configured to bind to `0.0.0.0` for hosted previews.
+Vite prints a local URL. For a hosted preview that needs network access, start the dev server with `npm run dev -- --host 0.0.0.0`.
 
 ### Other commands
 
