@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import { ArrowDownToLine, Check, ChevronRight, CircleAlert, Download, LogOut, Palette, RotateCcw, Settings2, ShieldCheck, UserRound } from 'lucide-react';
+import { Check, CircleAlert, Download, LogOut, Palette, RotateCcw, Settings2, ShieldCheck, UserRound } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useFinance } from '../context/FinanceContext.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
-import { formatDate } from '../finance/formatters.js';
 import { sanitizeEmail, sanitizeText } from '../finance/validation.js';
 import { buildCsv } from '../utils/csv.js';
 import { ConfirmDialog, Field, PageHeading, Panel, SectionHeading, Toggle, Button } from '../components/ui/Primitives.jsx';
@@ -30,7 +29,7 @@ function SettingsJump({ active, setActive }) {
     { id: 'simulation', label: 'Simulation', icon: Settings2 },
     { id: 'data', label: 'Data & account', icon: ShieldCheck },
   ];
-  return <nav className="settings-nav" aria-label="Settings sections">{links.map(({ id, label, icon: Icon }) => <button key={id} type="button" aria-current={active === id ? 'location' : undefined} className={active === id ? 'active' : ''} onClick={() => { setActive(id); const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches; document.getElementById(`settings-${id}`)?.scrollIntoView?.({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' }); }}><Icon size={15} /><span>{label}</span></button>)}</nav>;
+  return <nav className="settings-nav" aria-label="Settings sections">{links.map(({ id, label, icon: Icon }) => <button key={id} type="button" aria-label={label} title={label} aria-current={active === id ? 'location' : undefined} className={active === id ? 'active' : ''} onClick={() => { setActive(id); const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches; document.getElementById(`settings-${id}`)?.scrollIntoView?.({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' }); }}><Icon size={15} /><span>{label}</span></button>)}</nav>;
 }
 
 export default function Settings() {

@@ -67,7 +67,7 @@ export default function Budgets() {
       <div className="overview-stat"><div className="metric-topline"><span>Forecast spend · estimate</span></div><div className="metric-number" style={{ color: projectedRemaining < 0 ? 'var(--danger)' : 'var(--text)' }}>{formatCurrency(forecastSpend)}</div><div className="metric-foot" style={{ color: projectedRemaining < 0 ? 'var(--danger)' : 'var(--muted)' }}>{projectedRemaining >= 0 ? `${formatCurrency(projectedRemaining)} forecast headroom` : `${formatCurrency(Math.abs(projectedRemaining))} projected over-allocation`}</div></div>
     </div>
     {projectedRemaining < 0 && <div className="inline-warning danger" style={{ marginBottom: 15 }}><CircleAlert size={14} />At your current average pace plus known commitments, estimated month-end spending is {formatCurrency(Math.abs(projectedRemaining))} over the total budget. This is an estimate; category plans can be adjusted below.</div>}
-    <div className="dashboard-bottom-grid" style={{ marginTop: 0, gridTemplateColumns: 'minmax(0,1.45fr) minmax(280px,.75fr)' }}>
+    <div className="dashboard-bottom-grid budgets-overview-grid" style={{ marginTop: 0 }}>
       <Panel>
         <SectionHeading title="Planned vs actual" detail="Actual amounts exclude savings transfers" action={<span className="panel-caption">Day {summary.challengeDay} / {summary.durationDays}</span>} />
         <div style={{ overflow: 'visible' }}>

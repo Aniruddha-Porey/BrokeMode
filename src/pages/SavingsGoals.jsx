@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { ArrowRight, CalendarDays, CircleAlert, Edit2, Plus, ShieldCheck, Smartphone, Sparkles, Target, Trash2 } from 'lucide-react';
+import { CircleAlert, Edit2, Plus, ShieldCheck, Smartphone, Sparkles, Target, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useFinance } from '../context/FinanceContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';

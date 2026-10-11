@@ -11,7 +11,7 @@ BrokeMode is a responsive, frontend-only fintech budgeting prototype built aroun
 Requirements: Node.js **20.19+** and npm.
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
@@ -20,10 +20,11 @@ Vite prints a local URL. For a hosted preview that needs network access, start t
 ### Other commands
 
 ```bash
+npm run lint    # ESLint: React, hooks, and JSX accessibility checks
 npm test        # Vitest + Testing Library
 npm run build   # production bundle in dist/
 npm run preview # serve the production build locally
-npm run check   # tests followed by a production build
+npm run check   # lint, tests, then production build
 ```
 
 ## Demo flows
@@ -51,7 +52,12 @@ npm run check   # tests followed by a production build
 | Insights | `/insights` |
 | Settings | `/settings` |
 
-The app uses a responsive navigation shell, mobile bottom navigation, accessible forms and dialogs, visible focus states, INR/Indian number formatting, a dark/light theme toggle, and a glass-finished dark-first design token system. The public landing page uses locally bundled lifestyle photos and a clearly labeled sample-month snapshot; those figures are illustrative, not live user data. The requested Google Stitch workflow could not be used in this environment because the Stitch connector was unsupported and no design files were supplied; the visual implementation follows the written design brief and tokens instead.
+## Architecture and contributing
+
+- [Architecture and finance invariants](docs/architecture.md) documents route/state boundaries, persistence, and the authoritative money model.
+- [Contributing guide](CONTRIBUTING.md) covers setup, required checks, design conventions, and a 320–1440 px responsive review checklist.
+
+The app uses a responsive navigation shell, mobile bottom navigation, accessible forms and dialogs, visible focus states, INR/Indian number formatting, a dark/light theme toggle, and a glass-finished dark-first design token system. The public landing page uses locally bundled lifestyle photos and a clearly labeled sample-month snapshot; those figures are illustrative, not live user data.
 
 ## Financial model conventions
 
@@ -71,14 +77,15 @@ The calculations are centralized in `src/finance/calculations.js` and are shared
 - Invalid or incompatible finance data falls back to the seeded demo. **Reset to demo** replaces the local finance state and demo session.
 - Data is not synchronized across browsers or devices and has no server-side backup.
 
-## Tests and production build
+## Quality checks and production build
 
 Tests cover shared ledger/forecast semantics, bounded and sanitized local persistence, invalid reducer actions, CSV formula-injection protection, goal transfers, bill occurrence/payment handling, Decision Lab preview/apply behavior, transaction filters, landing-to-demo entry, appearance persistence, fail-closed demo sessions, accessible modal focus/keyboard behavior, onboarding, route rendering, and transaction entry. User-authored text is length-limited, rendered as text (never HTML), and CSV cells are guarded against spreadsheet formula execution.
 
 ```bash
+npm run lint
 npm test
 npm run build
-# or run both in sequence
+# or run all three in sequence
 npm run check
 ```
 

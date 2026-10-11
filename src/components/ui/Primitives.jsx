@@ -135,7 +135,8 @@ export function Modal({ open, title, subtitle, onClose, children, footer, width 
   const subtitleId = `${dialogId}-description`;
   useDialogFocus(open, onClose, panelRef, initialFocusSelector);
   if (!open) return null;
-  return <div className="modal-backdrop" onMouseDown={(event) => { if (closeOnBackdrop && event.target === event.currentTarget) onClose?.(); }}>
+  return <div className="modal-backdrop">
+    {closeOnBackdrop && <button className="modal-backdrop-dismiss" type="button" aria-label="Close dialog" aria-hidden="true" tabIndex={-1} onClick={onClose} />}
     <div className="modal-panel" role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={subtitle ? subtitleId : undefined} ref={panelRef} tabIndex={-1} style={{ maxWidth: width }}>
       <div className="modal-header">
         <div><h2 id={titleId}>{title}</h2>{subtitle && <p id={subtitleId}>{subtitle}</p>}</div>

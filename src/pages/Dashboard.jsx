@@ -1,12 +1,11 @@
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  ArrowDownRight, ArrowRight, ArrowUpRight, CalendarClock, Check, CircleAlert, Clock3,
-  Coffee, CreditCard, ForkKnife, ShoppingBag, ShoppingCart, Sparkles, Target, TrainFront, ShieldCheck,
-  TrendingDown, Wallet, Zap,
+  ArrowRight, CalendarClock, Check, CircleAlert, Coffee, CreditCard, ShoppingBag, ShoppingCart,
+  ShieldCheck, TrainFront, TrendingDown, Wallet, Zap,
 } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext.jsx';
-import { calculateFinance, buildDashboardForecast, getRecommendations, getGoalStats } from '../finance/calculations.js';
+import { buildDashboardForecast, getRecommendations, getGoalStats } from '../finance/calculations.js';
 import { formatCurrency, formatDate, formatPercent } from '../finance/formatters.js';
 import { CATEGORY_COLORS } from '../data/demoData.js';
 import { Badge, PageHeading, Panel, ProgressBar, SectionHeading } from '../components/ui/Primitives.jsx';
@@ -118,7 +117,7 @@ function CategorySpending({ summary }) {
   </Panel>;
 }
 
-function RecentActivity({ state, summary }) {
+function RecentActivity({ state }) {
   const items = [...state.transactions].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 4);
   const emergency = state.goals.find((goal) => /emergency/i.test(goal.name));
   const goalStats = emergency ? getGoalStats(state, emergency) : null;
@@ -169,7 +168,7 @@ export default function Dashboard() {
       <CategorySpending summary={summary} />
       <HealthCard health={summary.health} />
       <InsightsPanel recommendations={recommendations} />
-      <RecentActivity state={state} summary={summary} />
+      <RecentActivity state={state} />
     </div>
   </>;
 }

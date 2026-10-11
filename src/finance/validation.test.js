@@ -66,6 +66,19 @@ describe('input and persistence safeguards', () => {
     expect(financeReducer(state, { type: 'ADD_TRANSACTION', transaction: { id: 'bad/id', date: state.currentDate, description: 'bad', category: 'Other', amount: 100, type: 'expense' } })).toBe(state);
   });
 
+  it('sanitizes goal updates before adding them to state', () => {
+    const state = makeDemoState();
+    const next = financeReducer(state, {
+      type: 'UPSERT_GOAL',
+      goal: { id: 'goal-travel', name: '  Weekend trip  ', target: 5000, savedAtStart: 0, targetDate: state.currentDate, icon: 'sparkles' },
+    });
+    expect(next.goals).toHaveLength(state.goals.length + 1);
+    expect(next.goals.at(-1)).toEqual({ id: 'goal-travel', name: 'Weekend trip', target: 5000, savedAtStart: 0, targetDate: state.currentDate, icon: 'sparkles' });
+
+    const rejected = financeReducer(state, { type: 'UPSERT_GOAL', goal: { id: 'goal-invalid', name: 'Missing target date', target: 5000, savedAtStart: 0, icon: 'sparkles' } });
+    expect(rejected).toBe(state);
+  });
+
   it('escapes CSV syntax and neutralizes spreadsheet-formula cells', () => {
     const csv = buildCsv(['Description', 'Amount'], [['=HYPERLINK("https://evil.example")', 123]], { bom: false });
     expect(csv).toContain('"\'=HYPERLINK(""https://evil.example"")"');

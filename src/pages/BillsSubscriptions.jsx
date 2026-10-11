@@ -100,7 +100,7 @@ export default function BillsSubscriptions() {
       <div className="overview-stat"><div className="metric-topline"><span>Paid this cycle</span><Check size={15} color="var(--lime)" /></div><div className="metric-number">{formatCurrency(historical.reduce((total, item) => total + item.amount, 0))}</div><div className="metric-foot">Historical payments remain in activity</div></div>
       <div className="overview-stat"><div className="metric-topline"><span>Spendable after commitments</span></div><div className="metric-number">{formatCurrency(summary.spendableBalance - upcomingSum)}</div><div className="metric-foot">Before future day-to-day spending</div></div>
     </div>
-    <div className="dashboard-bottom-grid" style={{ marginTop: 0, gridTemplateColumns: 'minmax(0,1.25fr) minmax(290px,.85fr)' }}>
+    <div className="dashboard-bottom-grid bills-overview-grid" style={{ marginTop: 0 }}>
       <Panel>
         <SectionHeading title="Upcoming payment timeline" detail="Future obligations · these amounts are reserved in your forecast" />
         {nextUp.length === 0 ? <EmptyState icon={CalendarClock} title="Nothing due before day 30" description="Active recurring payments beyond this challenge are still listed in the manager below." action={<Button size="sm" onClick={() => setEditing({ name: '', amount: '', category: 'Bills & subscriptions', recurrence: 'monthly', nextDueDate: state.currentDate, kind: 'bill', status: 'active' })}>Add a payment</Button>} /> : <div className="bill-timeline">

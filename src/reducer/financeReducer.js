@@ -17,6 +17,7 @@ import {
   parseMoney,
   sanitizeBill,
   sanitizeBudget,
+  sanitizeGoal,
   sanitizeId,
   sanitizeProfile,
   sanitizeStoredFinanceState,

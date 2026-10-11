@@ -1,4 +1,4 @@
-import { addDays, addFrequency, compareDates, daysBetween, getChallengeDay, getCycleEndDate } from './dates.js';
+import { addDays, addFrequency, compareDates, getChallengeDay, getCycleEndDate } from './dates.js';
 
 const sum = (items, pick = (item) => item.amount || 0) => items.reduce((total, item) => total + (Number(pick(item)) || 0), 0);
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));

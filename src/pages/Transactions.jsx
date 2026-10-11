@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { ArrowDownLeft, ArrowLeftRight, ArrowRight, ArrowUpRight, Edit2, Plus, Search, Trash2, Wallet, X } from 'lucide-react';
+import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, Edit2, Plus, Search, Trash2, Wallet, X } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { formatCurrency, formatDate } from '../finance/formatters.js';
@@ -62,7 +62,7 @@ function TransactionRow({ item, onEdit, onDelete }) {
 }
 
 export default function Transactions() {
-  const { state, summary, dispatch } = useFinance();
+  const { state, dispatch } = useFinance();
   const toast = useToast();
   const [search, setSearch] = useState('');
   const [type, setType] = useState('all');

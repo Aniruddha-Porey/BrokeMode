@@ -6,6 +6,8 @@ const MAX_DESCRIPTION_LENGTH = 120;
 const MAX_CATEGORY_LENGTH = 64;
 const MAX_NAME_LENGTH = 80;
 
+// Intentional sanitizer: these control and bidirectional-format characters are stripped from untrusted text.
+// eslint-disable-next-line no-control-regex
 const CONTROL_CHARACTERS = /[\u0000-\u001F\u007F-\u009F\u202A-\u202E\u2066-\u2069]/g;
 const ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$/;
 const EMAIL_PATTERN = /^[A-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?(?:\.[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?)+$/i;

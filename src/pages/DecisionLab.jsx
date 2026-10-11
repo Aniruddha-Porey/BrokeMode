@@ -1,17 +1,16 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
-  AlertTriangle, ArrowDownRight, ArrowRight, ArrowUpRight, CalendarDays, Check, CircleAlert,
-  Clock3, Info, RotateCcw, ShieldCheck, Sparkles, Target, Wallet, X,
+  AlertTriangle, ArrowRight, Check, CircleAlert, Info, RotateCcw, ShieldCheck, Sparkles, Target,
 } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { calculateFinance, buildDecisionForecast, getBillOccurrences, getGoalStats, makeDecisionScenario } from '../finance/calculations.js';
 import { addDays } from '../finance/dates.js';
 import { isISODate, parseMoney } from '../finance/validation.js';
-import { formatCurrency, formatDate, formatSignedCurrency } from '../finance/formatters.js';
+import { formatCurrency, formatDate } from '../finance/formatters.js';
 import { categoriesForState } from '../finance/categories.js';
 import { makeId } from '../utils/id.js';
-import { Badge, Button, Field, PageHeading, Panel, ProgressBar, SectionHeading, SelectField } from '../components/ui/Primitives.jsx';
+import { Badge, Button, Field, PageHeading, Panel, SectionHeading, SelectField } from '../components/ui/Primitives.jsx';
 import { DecisionForecastChart } from '../components/charts/FinancialCharts.jsx';
 
 function evaluateProposal(state, proposal) {
@@ -174,7 +173,6 @@ function ImpactPanel({ state, baseSummary, simulation, onApply, onDiscard, apply
 }
 
 function AlternativePanel({ state, formProposal, selectedKey, onSelect }) {
-  const summary = calculateFinance(state);
   const eligible = getBillOccurrences(state).filter((item) => item.kind === 'subscription' && item.billId);
   const subscription = eligible[0] ? state.bills.find((bill) => bill.id === eligible[0].billId) : null;
   const formAmount = Math.max(0, Math.round(Number(formProposal.amount) || 0));

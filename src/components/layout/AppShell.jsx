@@ -46,7 +46,7 @@ function SidebarNav({ onNavigate }) {
     {navGroups.map((group) => <div key={group.label}>
       <div className="nav-label">{group.label}</div>
       <nav className="nav-list" aria-label={group.label}>
-        {group.items.map(({ label, path, icon: Icon, accent }) => <NavLink key={path} to={path} onClick={onNavigate} title={label} className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+        {group.items.map(({ label, path, icon: Icon, accent }) => <NavLink key={path} to={path} onClick={onNavigate} aria-label={label} title={label} className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
           <span className="nav-icon"><Icon size={17} strokeWidth={1.8} /></span>
           <span className="nav-text">{label}</span>
           {accent && summary.risk.code !== 'on-track' && <span className="nav-count">●</span>}
@@ -195,7 +195,8 @@ export default function AppShell({ children }) {
       <button type="button" className={`mobile-nav-link ${location.pathname === '/settings' ? 'active' : ''}`} onClick={() => setDrawerOpen(true)} aria-expanded={drawerOpen} aria-controls="mobile-navigation-drawer"><Menu strokeWidth={1.8} /><span>More</span></button>
     </nav>
 
-    <div className="mobile-drawer-backdrop" hidden={!drawerOpen} onMouseDown={(event) => { if (event.target === event.currentTarget) setDrawerOpen(false); }}>
+    <div className="mobile-drawer-backdrop" hidden={!drawerOpen}>
+      <button className="mobile-drawer-backdrop-dismiss" type="button" aria-label="Close navigation" aria-hidden="true" tabIndex={-1} onClick={() => setDrawerOpen(false)} />
       <div id="mobile-navigation-drawer" className="mobile-drawer" role="dialog" aria-modal="true" aria-label="Mobile navigation" ref={drawerRef} tabIndex={-1}>
         <button className="icon-button mobile-drawer-close" type="button" onClick={() => setDrawerOpen(false)} aria-label="Close navigation"><X size={17} /></button>
         <Brand />

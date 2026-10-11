@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Eye, EyeOff, LockKeyhole, Mail, ArrowRight, CircleAlert } from 'lucide-react';
+import { Eye, EyeOff, LockKeyhole, ArrowRight, CircleAlert } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthLayout from '../components/auth/AuthLayout.jsx';
 import { Button, Field } from '../components/ui/Primitives.jsx';

@@ -169,6 +169,20 @@ describe('authentication and onboarding flows', () => {
     }
   });
 
+  it('keeps budget and bill columns controlled by responsive CSS', async () => {
+    window.localStorage.setItem('brokemode-auth:v1', JSON.stringify({ user: { name: 'Alex Morgan', email: 'alex@brokemode.demo', demo: true, remember: true } }));
+    renderApp('/budgets');
+    const budgetGrid = (await screen.findByRole('heading', { name: 'Planned vs actual' })).closest('.dashboard-bottom-grid');
+    expect(budgetGrid).toHaveClass('budgets-overview-grid');
+    expect(budgetGrid.style.gridTemplateColumns).toBe('');
+
+    cleanup();
+    renderApp('/bills-subscriptions');
+    const billGrid = (await screen.findByRole('heading', { name: 'Upcoming payment timeline' })).closest('.dashboard-bottom-grid');
+    expect(billGrid).toHaveClass('bills-overview-grid');
+    expect(billGrid.style.gridTemplateColumns).toBe('');
+  });
+
   it('renders every authenticated product route without runtime errors', async () => {
     window.localStorage.setItem('brokemode-auth:v1', JSON.stringify({ user: { name: 'Alex Morgan', email: 'alex@brokemode.demo', demo: true, remember: true } }));
     const routes = [
@@ -197,6 +211,14 @@ describe('authentication and onboarding flows', () => {
 });
 
 describe('app shell navigation accessibility', () => {
+  it('gives the horizontally scrolling settings section controls accessible names', async () => {
+    window.localStorage.setItem('brokemode-auth:v1', JSON.stringify({ user: { name: 'Alex Morgan', email: 'alex@brokemode.demo', demo: true, remember: true } }));
+    renderApp('/settings');
+    for (const label of ['Profile', 'Appearance', 'Simulation', 'Data & account']) {
+      expect(await screen.findByRole('button', { name: label })).toBeInTheDocument();
+    }
+  });
+
   it('warns when browser storage is unavailable', async () => {
     window.localStorage.setItem('brokemode-auth:v1', JSON.stringify({ user: { name: 'Alex Morgan', email: 'alex@brokemode.demo', demo: true, remember: true } }));
     const originalSetItem = Storage.prototype.setItem;

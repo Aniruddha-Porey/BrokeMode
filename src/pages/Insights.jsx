@@ -1,17 +1,15 @@
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  AlertTriangle, ArrowRight, BarChart3, CalendarClock, Check, CircleAlert, HeartPulse,
-  ShieldCheck, Sparkles, Target, TrendingDown, TrendingUp,
+  AlertTriangle, ArrowRight, CircleAlert, HeartPulse, ShieldCheck,
 } from 'lucide-react';
 import { Bar, BarChart, CartesianGrid, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useFinance } from '../context/FinanceContext.jsx';
-import { calculateFinance, getRecommendations, getGoalStats } from '../finance/calculations.js';
+import { buildDashboardForecast, getRecommendations, getGoalStats } from '../finance/calculations.js';
 import { addDays } from '../finance/dates.js';
-import { formatCurrency, formatDate, formatPercent } from '../finance/formatters.js';
-import { Badge, Button, PageHeading, Panel, ProgressBar, SectionHeading } from '../components/ui/Primitives.jsx';
+import { formatCurrency, formatPercent } from '../finance/formatters.js';
+import { Badge, PageHeading, Panel, ProgressBar, SectionHeading } from '../components/ui/Primitives.jsx';
 import { CashflowChart } from '../components/charts/FinancialCharts.jsx';
-import { buildDashboardForecast } from '../finance/calculations.js';
 
 const axisFormatter = (value) => value >= 1000 ? `₹${Math.round(value / 1000)}k` : `₹${value}`;
 
