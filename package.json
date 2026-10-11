@@ -8,9 +8,10 @@
     "build": "node ./node_modules/vite/bin/vite.js build",
     "preview": "vite preview",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "lint": "eslint .",
-    "check": "npm run lint && npm run test && npm run build"
+    "check": "npm run lint && npm run test:coverage && npm run build"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^4.3.4",
@@ -27,6 +28,7 @@
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.1.0",
     "@testing-library/user-event": "^14.5.2",
+    "@vitest/coverage-v8": "^4.1.11",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.39.5",
     "eslint-plugin-jsx-a11y": "^6.10.2",

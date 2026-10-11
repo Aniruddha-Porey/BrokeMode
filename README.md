@@ -20,11 +20,12 @@ Vite prints a local URL. For a hosted preview that needs network access, start t
 ### Other commands
 
 ```bash
-npm run lint    # ESLint: React, hooks, and JSX accessibility checks
-npm test        # Vitest + Testing Library
-npm run build   # production bundle in dist/
-npm run preview # serve the production build locally
-npm run check   # lint, tests, then production build
+npm run lint          # ESLint: React, hooks, and JSX accessibility checks
+npm test              # Vitest + Testing Library
+npm run test:coverage # tests plus V8 coverage gates for the finance core
+npm run build         # production bundle in dist/
+npm run preview       # serve the production build locally
+npm run check         # lint, coverage-gated tests, then production build
 ```
 
 ## Demo flows
@@ -80,13 +81,14 @@ The calculations are centralized in `src/finance/calculations.js` and are shared
 
 ## Quality checks and production build
 
-Tests cover shared ledger/forecast semantics, bounded and sanitized local persistence, invalid reducer actions, CSV formula-injection protection, goal transfers, bill occurrence/payment handling, Decision Lab preview/apply behavior, transaction filters, landing-to-demo entry, appearance persistence, fail-closed demo sessions, accessible modal focus/keyboard behavior, onboarding, route rendering, and transaction entry. User-authored text is length-limited, rendered as text (never HTML), and CSV cells are guarded against spreadsheet formula execution.
+The Vitest + Testing Library suite covers shared ledger/forecast semantics, sanitized reducer actions and persistence, CSV formula-injection protection, goal transfers, bill occurrence/payment handling, Decision Lab preview/apply behavior, landing-to-demo entry, accessible dialogs, onboarding, route rendering, and transaction entry. The V8 coverage gate is deliberately scoped to the risk-sensitive finance calculations, validation, reducer, and CSV export modules; it enforces aggregate and per-module thresholds (currently 90% statements, 75% branches, 95% functions, and 95% lines overall). UI behavior is additionally checked through integration tests rather than treated as blanket line-coverage evidence. User-authored text is length-limited and rendered as text (never HTML).
 
 ```bash
 npm run lint
 npm test
+npm run test:coverage
 npm run build
-# or run all three in sequence
+# lint, coverage-gated tests, and build in sequence
 npm run check
 ```
 

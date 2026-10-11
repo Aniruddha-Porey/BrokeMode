@@ -20,7 +20,7 @@ npm run check
 npm audit --audit-level=moderate
 ```
 
-`npm run check` runs ESLint (React, Hooks, and JSX accessibility rules), the full Vitest suite, and a production Vite build. Add a regression test for every changed finance rule or user flow. Do not commit `node_modules`, `dist`, credentials, real user data, or local secrets.
+`npm run check` runs ESLint (React, Hooks, and JSX accessibility rules), the full Vitest + Testing Library suite with V8 coverage thresholds for finance calculations, validation, reducer actions, and CSV export, then a production Vite build. Add a regression test for every changed finance rule or user flow; keep coverage thresholds honest and raise them when practical. Do not commit `node_modules`, `dist`, credentials, real user data, or local secrets.
 
 ## Product and implementation conventions
 
