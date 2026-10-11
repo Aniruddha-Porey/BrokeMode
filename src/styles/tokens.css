@@ -1,13 +1,13 @@
 :root {
   color-scheme: dark;
-  --bg: #090B12;
-  --bg-soft: #0F121C;
-  --surface: #151925;
-  --raised: #1B2030;
+  --bg: #0B1020;
+  --bg-soft: #11192B;
+  --surface: #172137;
+  --raised: #202D45;
   --text: #F5F6FA;
-  --muted: #9299AB;
-  --muted-2: #687084;
-  --border: #282E3D;
+  --muted: #9DA7BA;
+  --muted-2: #8995AD;
+  --border: #2B3952;
   --violet: #9B87F5;
   --violet-soft: rgba(155, 135, 245, .13);
   --lime: #C4F36B;
@@ -17,8 +17,8 @@
   --danger: #FF747F;
   --danger-soft: rgba(255, 116, 127, .11);
   --glass-highlight: rgba(255,255,255,.055);
-  --ambient-violet: rgba(155,135,245,.08);
-  --ambient-lime: rgba(196,243,107,.035);
+  --ambient-violet: rgba(155,135,245,.105);
+  --ambient-lime: rgba(196,243,107,.03);
   --blue: #79B8FF;
   --teal: #6ED8C4;
   --shadow: 0 14px 40px rgba(0, 0, 0, .22);
