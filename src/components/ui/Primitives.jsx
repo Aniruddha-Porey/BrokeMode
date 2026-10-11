@@ -51,11 +51,14 @@ export function MetricValue({ label, value, detail, trend, icon: Icon, tone = 'd
 }
 
 export function Field({ label, hint, error, required, className = '', children, ...props }) {
-  const errorId = useId();
+  const fieldId = useId();
+  const errorId = `${fieldId}-error`;
+  const hintId = `${fieldId}-hint`;
+  const describedBy = [props['aria-describedby'], error ? errorId : hint ? hintId : null].filter(Boolean).join(' ') || undefined;
   return <label className={`field ${className}`}>
     {label && <span className="field-label">{label}{required && <span className="required"> *</span>}</span>}
-    {children || <input {...props} className={`input ${error ? 'input-error' : ''}`} aria-invalid={error ? 'true' : props['aria-invalid']} aria-describedby={error ? errorId : props['aria-describedby']} />}
-    {error ? <span id={errorId} className="field-error" role="alert"><AlertCircle size={13} />{error}</span> : hint ? <span className="field-hint">{hint}</span> : null}
+    {children || <input {...props} required={required} className={`input ${error ? 'input-error' : ''}`} aria-required={required ? 'true' : props['aria-required']} aria-invalid={error ? 'true' : props['aria-invalid']} aria-describedby={describedBy} />}
+    {error ? <span id={errorId} className="field-error" role="alert"><AlertCircle size={13} />{error}</span> : hint ? <span id={hintId} className="field-hint">{hint}</span> : null}
   </label>;
 }
 
@@ -125,12 +128,12 @@ export function useDialogFocus(open, onClose, panelRef, initialFocusSelector) {
   }, [open, initialFocusSelector, panelRef]);
 }
 
-export function Modal({ open, title, subtitle, onClose, children, footer, width = 520, closeOnBackdrop = true }) {
+export function Modal({ open, title, subtitle, onClose, children, footer, width = 520, closeOnBackdrop = true, initialFocusSelector = '.modal-body input:not([type="hidden"]):not([disabled]), .modal-body select:not([disabled]), .modal-body textarea:not([disabled])' }) {
   const panelRef = useRef(null);
   const dialogId = useId();
   const titleId = `${dialogId}-title`;
   const subtitleId = `${dialogId}-description`;
-  useDialogFocus(open, onClose, panelRef);
+  useDialogFocus(open, onClose, panelRef, initialFocusSelector);
   if (!open) return null;
   return <div className="modal-backdrop" onMouseDown={(event) => { if (closeOnBackdrop && event.target === event.currentTarget) onClose?.(); }}>
     <div className="modal-panel" role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={subtitle ? subtitleId : undefined} ref={panelRef} tabIndex={-1} style={{ maxWidth: width }}>
@@ -145,7 +148,7 @@ export function Modal({ open, title, subtitle, onClose, children, footer, width 
 }
 
 export function ConfirmDialog({ open, title, description, confirmLabel = 'Confirm', danger = false, onCancel, onConfirm }) {
-  return <Modal open={open} title={title} subtitle={description} onClose={onCancel} width={440} footer={<>
+  return <Modal open={open} title={title} subtitle={description} onClose={onCancel} initialFocusSelector=".modal-footer button:first-child" width={440} footer={<>
     <Button variant="subtle" onClick={onCancel}>Keep it</Button>
     <Button variant={danger ? 'danger' : 'primary'} onClick={onConfirm}>{confirmLabel}<ChevronRight size={15} /></Button>
   </>}>

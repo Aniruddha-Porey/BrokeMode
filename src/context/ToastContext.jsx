@@ -8,7 +8,7 @@ export function ToastProvider({ children }) {
   const dismiss = useCallback((id) => setItems((current) => current.filter((item) => item.id !== id)), []);
   const toast = useCallback((message, tone = 'success') => {
     const id = `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-    setItems((current) => [...current, { id, message, tone }]);
+    setItems((current) => [...current, { id, message, tone }].slice(-4));
     window.setTimeout(() => dismiss(id), 3800);
   }, [dismiss]);
   const value = useMemo(() => ({ toast }), [toast]);
@@ -23,7 +23,7 @@ export function ToastProvider({ children }) {
           return <div className={`toast toast-${item.tone}`} key={item.id}>
             <span className="toast-icon"><ItemIcon size={16} /></span>
             <span>{item.message}</span>
-            <button className="toast-close" onClick={() => dismiss(item.id)} aria-label="Dismiss notification"><X size={15} /></button>
+            <button className="toast-close" type="button" onClick={() => dismiss(item.id)} aria-label="Dismiss notification"><X size={15} /></button>
           </div>;
         })}
       </div>

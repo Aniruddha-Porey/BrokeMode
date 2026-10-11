@@ -27,7 +27,7 @@ function BillForm({ open, bill, state, onClose, onSave }) {
     close();
   };
   return <Modal open={open} onClose={close} title={bill?.id ? 'Edit payment' : 'Add a bill or subscription'} subtitle="Forecasts include active payments due before the challenge ends. A payment is not counted again after it is recorded." width={540} footer={<><Button variant="subtle" onClick={close}>Cancel</Button><Button type="submit" form="bill-form">Save payment</Button></>}>
-    <form id="bill-form" onSubmit={submit}>
+    <form id="bill-form" onSubmit={submit} noValidate>
       <div className="modal-form-grid">
         <Field className="span-2" label="Name" maxLength={80} value={form.name} onChange={(event) => set('name', event.target.value)} placeholder="e.g. Mobile plan" required />
         <Field label="Amount (INR)" type="number" min="1" max="1000000000" step="1" value={form.amount} onChange={(event) => set('amount', event.target.value)} placeholder="0" required />

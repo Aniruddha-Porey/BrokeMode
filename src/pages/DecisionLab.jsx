@@ -81,14 +81,14 @@ function DecisionBuilder({ state, onSimulate }) {
   return <div className="decision-builder">
     <Panel>
       <div className="panel-title-row"><div><h2><span className="decision-step">01</span>Build your decision</h2><p>Try it here first. Nothing is recorded until you apply.</p></div><Badge tone="violet">PREVIEW ONLY</Badge></div>
-      <form onSubmit={submit}>
+      <form onSubmit={submit} noValidate>
         <Field label="What are you thinking of buying?" maxLength={120} placeholder="e.g. Headphones" value={form.description} onChange={(event) => set('description', event.target.value)} required />
         <div style={{ height: 12 }} />
         <SelectField label="Category" value={form.category} onChange={(event) => set('category', event.target.value)} options={categoriesForState(state)} />
         <div style={{ height: 13 }} />
         <div className="purchase-amount-control">
           <Field label="Purchase amount" type="number" min="1" step="1" inputMode="numeric" value={form.amount} onChange={(event) => set('amount', event.target.value)} required>
-            <span className="input-with-prefix"><span className="input-prefix">₹</span><input className="input tabular" type="number" min="1" max="1000000" step="1" inputMode="numeric" value={form.amount} onChange={(event) => set('amount', event.target.value)} aria-label="Purchase amount in rupees" /></span>
+            <span className="input-with-prefix"><span className="input-prefix">₹</span><input className="input tabular" type="number" min="1" max="1000000" step="1" inputMode="numeric" required aria-required="true" value={form.amount} onChange={(event) => set('amount', event.target.value)} aria-label="Purchase amount in rupees" /></span>
           </Field>
           <input className="amount-slider" type="range" min="0" max={max} step="50" value={Math.max(0, Math.min(max, Number(form.amount) || 0))} onChange={(event) => set('amount', event.target.value)} aria-label="Adjust purchase amount" />
           <div className="amount-range-labels"><span>₹0</span><span>{formatCurrency(max)}</span></div>

@@ -82,7 +82,7 @@ export default function Settings() {
       <div>
         <Panel className="settings-section" id="settings-profile">
           <SectionHeading title="Profile" detail="Personalize your workspace identity" />
-          <form onSubmit={saveProfile}>
+          <form onSubmit={saveProfile} noValidate>
             <div className="settings-form-row">
               <Field label="Display name" maxLength={80} value={profileName} onChange={(event) => setProfileName(event.target.value)} placeholder="Your name" required />
               <Field label="Email address" type="email" maxLength={254} value={profileEmail} onChange={(event) => setProfileEmail(event.target.value)} placeholder="you@example.com" required />

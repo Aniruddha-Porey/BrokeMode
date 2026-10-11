@@ -33,7 +33,7 @@ function BudgetEditor({ open, budget, onClose, onSave, existingCategories = [] }
     onClose();
   };
   return <Modal open={open} onClose={onClose} title={budget?.isTotal ? 'Adjust challenge funds' : 'Adjust category budget'} subtitle={budget?.isTotal ? 'Change the starting amount available for this 30-day challenge.' : budget?.category ? `Change the planned amount for ${budget.category}.` : 'Set a planned amount for a new category.'} width={430} footer={<><Button variant="subtle" onClick={onClose}>Cancel</Button><Button type="submit" form="budget-editor-form">Save budget</Button></>}>
-    <form id="budget-editor-form" onSubmit={save}>
+    <form id="budget-editor-form" onSubmit={save} noValidate>
       {budget?.isNew && <Field label="Category name" maxLength={64} value={category} onChange={(event) => setCategory(event.target.value)} placeholder="e.g. Pet care" required />}
       <Field label={budget?.isTotal ? 'Starting challenge funds (INR)' : 'Planned amount (INR)'} type="number" min="1" max="1000000000" step="1" value={amount} onChange={(event) => setAmount(event.target.value)} placeholder="0" required />
       {error && <div className="field-error" role="alert" style={{ marginTop: 9 }}>{error}</div>}

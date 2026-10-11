@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { ArrowDownLeft, ArrowLeftRight, ArrowRight, ArrowUpRight, Edit2, Plus, Search, Trash2, Wallet } from 'lucide-react';
+import { ArrowDownLeft, ArrowLeftRight, ArrowRight, ArrowUpRight, Edit2, Plus, Search, Trash2, Wallet, X } from 'lucide-react';
 import { useFinance } from '../context/FinanceContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { formatCurrency, formatDate } from '../finance/formatters.js';
@@ -32,7 +32,7 @@ function TransactionForm({ open, onClose, initial, state, onSave }) {
     close();
   };
   return <Modal open={open} onClose={close} title={isEditing ? 'Edit transaction' : 'Add transaction'} subtitle="Keep the ledger aligned with what actually happened." width={530} footer={<><Button variant="subtle" onClick={close}>Cancel</Button><Button type="submit" form="transaction-form" icon={isEditing ? Edit2 : Plus}>{isEditing ? 'Save changes' : 'Add transaction'}</Button></>}>
-    <form id="transaction-form" onSubmit={submit}>
+    <form id="transaction-form" onSubmit={submit} noValidate>
       <div className="segmented-control segmented-full" style={{ marginBottom: 15 }} role="group" aria-label="Transaction type">
         {['expense', 'income', 'transfer'].map((type) => <button key={type} type="button" aria-pressed={form.type === type} className={form.type === type ? 'selected' : ''} onClick={() => { set('type', type); setError(''); }}>{typeLabel[type]}</button>)}
       </div>
@@ -81,6 +81,8 @@ export default function Transactions() {
   const expenses = state.transactions.filter((item) => item.type === 'expense').reduce((total, item) => total + item.amount, 0);
   const transfer = state.transactions.filter((item) => item.type === 'transfer').reduce((total, item) => total + item.amount, 0);
   const net = income - expenses - transfer;
+  const hasActiveFilters = Boolean(search.trim()) || type !== 'all' || category !== 'all' || period !== 'challenge' || sort !== 'newest';
+  const clearFilters = () => { setSearch(''); setType('all'); setCategory('all'); setPeriod('challenge'); setSort('newest'); };
 
   const save = (transaction) => {
     if (editing) dispatch({ type: 'UPDATE_TRANSACTION', transaction });
@@ -107,7 +109,7 @@ export default function Transactions() {
       <div className="overview-stat"><div className="metric-topline"><span>Net cash flow</span><ArrowLeftRight size={15} color={net >= 0 ? 'var(--lime)' : 'var(--amber)'} /></div><div className="metric-number" style={{ color: net < 0 ? 'var(--amber)' : 'var(--text)' }}>{net < 0 ? '−' : ''}{formatCurrency(Math.abs(net))}</div><div className="metric-foot">Income minus expenses and transfers</div></div>
     </div>
     <Panel>
-      <SectionHeading title="Transaction history" detail={`${filtered.length} of ${state.transactions.length} entries · demo ledger, not a bank connection`} />
+      <SectionHeading title="Transaction history" detail={`${filtered.length} of ${state.transactions.length} entries · demo ledger, not a bank connection`} action={hasActiveFilters ? <Button variant="subtle" size="sm" icon={X} onClick={clearFilters}>Clear filters</Button> : null} />
       <div className="table-filters">
         <label className="search-field"><Search size={14} /><input className="input" type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search descriptions or categories" aria-label="Search transactions" /></label>
         <select className="input select-input filter-select" aria-label="Filter by transaction type" value={type} onChange={(event) => setType(event.target.value)}><option value="all">All types</option><option value="expense">Expenses</option><option value="income">Income</option><option value="transfer">Savings transfers</option></select>
@@ -115,7 +117,9 @@ export default function Transactions() {
         <select className="input select-input filter-select" aria-label="Filter by date" value={period} onChange={(event) => setPeriod(event.target.value)}><option value="challenge">This challenge</option><option value="7days">Last 7 days</option></select>
         <select className="input select-input filter-select" aria-label="Sort transactions" value={sort} onChange={(event) => setSort(event.target.value)}><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="highest">Highest amount</option><option value="lowest">Lowest amount</option></select>
       </div>
-      {filtered.length === 0 ? <EmptyState icon={Search} title="No transactions match" description="Try a different search or clear one of your filters." action={<Button variant="outline" size="sm" onClick={() => { setSearch(''); setType('all'); setCategory('all'); setPeriod('challenge'); }}>Clear filters</Button>} /> : <>
+      {filtered.length === 0 ? state.transactions.length === 0
+        ? <EmptyState icon={ArrowLeftRight} title="Your ledger is ready" description="Add your first expense, income, or savings transfer to see how it changes this month." action={<Button size="sm" icon={Plus} onClick={openAdd}>Add your first transaction</Button>} />
+        : <EmptyState icon={Search} title="No transactions match" description="Try a different search or clear one of your filters." action={<Button variant="outline" size="sm" onClick={clearFilters}>Clear filters</Button>} /> : <>
         <div className="table-scroll desktop-table">
           <table className="data-table"><thead><tr><th>Description</th><th>Date</th><th>Category</th><th>Type</th><th style={{ textAlign: 'right' }}>Amount</th><th><span className="sr-only">Actions</span></th></tr></thead><tbody>{filtered.map((item) => <TransactionRow key={item.id} item={item} onEdit={openEdit} onDelete={setDeleting} />)}</tbody></table>
         </div>

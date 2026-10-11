@@ -338,6 +338,9 @@ select option { background: var(--surface); color: var(--text); }
 .segmented-control button:hover:not(.selected) { color: var(--text); }
 .segmented-full { width: 100%; }
 .segmented-full button { flex: 1; }
+.contribution-quick-amounts button { min-height: 43px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+.contribution-quick-amounts button small { color: var(--muted-2); font-size: 8px; font-variant-numeric: tabular-nums; }
+.contribution-quick-amounts button.selected small { color: var(--text); }
 .decision-builder .field + .field { margin-top: 13px; }
 .decision-builder .simulate-button { width: 100%; margin-top: 17px; }
 .decision-summary-note { padding: 10px; background: var(--bg-soft); border: 1px solid var(--border); border-radius: 9px; color: var(--muted); font-size: 9px; margin-top: 12px; line-height: 1.5; }

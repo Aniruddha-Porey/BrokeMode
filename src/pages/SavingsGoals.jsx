@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { ArrowRight, CalendarDays, Edit2, Plus, ShieldCheck, Smartphone, Sparkles, Target, Trash2 } from 'lucide-react';
+import { ArrowRight, CalendarDays, CircleAlert, Edit2, Plus, ShieldCheck, Smartphone, Sparkles, Target, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useFinance } from '../context/FinanceContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
@@ -28,7 +28,7 @@ function GoalForm({ open, goal, onClose, onSave }) {
     onClose();
   };
   return <Modal open={open} onClose={onClose} title={goal?.id ? 'Edit savings goal' : 'Create a savings goal'} subtitle="A goal is a plan, not a separate bank account in this demo." width={480} footer={<><Button variant="subtle" onClick={onClose}>Cancel</Button><Button type="submit" form="goal-form">Save goal</Button></>}>
-    <form id="goal-form" onSubmit={save}>
+    <form id="goal-form" onSubmit={save} noValidate>
       <div className="modal-form-grid">
         <Field className="span-2" label="Goal name" maxLength={80} value={name} onChange={(event) => setName(event.target.value)} placeholder="e.g. A weekend away" required />
         <Field label="Target amount (INR)" type="number" min="1" max="1000000000" step="1" value={target} onChange={(event) => setTarget(event.target.value)} placeholder="0" required />
@@ -39,21 +39,32 @@ function GoalForm({ open, goal, onClose, onSave }) {
   </Modal>;
 }
 
-function ContributionModal({ open, goal, state, onClose, onContribute }) {
+function ContributionModal({ open, goal, summary, onClose, onContribute }) {
   const [amount, setAmount] = useState('');
   const [error, setError] = useState('');
+  const available = Math.max(0, Math.floor(summary.spendableBalance));
+  const quickAmounts = [
+    { label: '25%', value: Math.floor(available * 0.25) },
+    { label: '50%', value: Math.floor(available * 0.5) },
+    { label: 'Max', value: available },
+  ].filter((item, index, all) => item.value > 0 && all.findIndex((candidate) => candidate.value === item.value) === index);
   const submit = (event) => {
     event.preventDefault();
-    const value = parseMoney(amount, { min: 1 });
-    if (value === null) { setError('Enter a whole-rupee contribution between ₹1 and ₹1,00,00,00,000.'); return; }
+    const value = parseMoney(amount, { min: 1, max: available });
+    if (value === null) { setError(available ? `Enter a whole-rupee amount up to ${formatCurrency(available)}.` : 'There is no spendable balance available for a contribution right now.'); return; }
     onContribute(value);
   };
   const close = () => { setError(''); setAmount(''); onClose(); };
-  return <Modal open={open} onClose={close} title={`Add to ${goal?.name || 'your goal'}`} subtitle="This moves money out of everyday spendable cash and into goal progress — it is not an expense." width={450} footer={<><Button variant="subtle" onClick={close}>Cancel</Button><Button type="submit" form="contribution-form">Confirm contribution</Button></>}>
+  return <Modal open={open} onClose={close} title={`Add to ${goal?.name || 'your goal'}`} subtitle="This moves money out of everyday spendable cash and into goal progress — it is not an expense." width={450} footer={<><Button variant="subtle" onClick={close}>Cancel</Button><Button type="submit" form="contribution-form" disabled={!available}>Confirm contribution</Button></>}>
     <form id="contribution-form" onSubmit={submit}>
-      <div className="alert-strip" style={{ marginBottom: 14 }}><ShieldCheck size={15} /><span>Spendable balance today: <strong>{formatCurrency(state.startingBudget + state.transactions.filter((item) => item.type === 'income').reduce((total, item) => total + item.amount, 0) - state.transactions.filter((item) => item.type === 'expense' || item.type === 'transfer').reduce((total, item) => total + item.amount, 0))}</strong></span></div>
-      <Field label="Contribution amount (INR)" type="number" min="1" max="1000000000" step="1" value={amount} onChange={(event) => setAmount(event.target.value)} placeholder="0" required />
-      {error && <div className="field-error" role="alert" style={{ marginTop: 10 }}>{error}</div>}
+      <div className="alert-strip" style={{ marginBottom: 14 }}><ShieldCheck size={15} /><span>Spendable balance today: <strong>{formatCurrency(summary.spendableBalance)}</strong></span></div>
+      {quickAmounts.length > 0 ? <div style={{ marginBottom: 13 }}>
+        <div className="row-between" style={{ marginBottom: 6 }}><span className="field-label">Quick amount</span><span className="tiny-note">of available cash</span></div>
+        <div className="segmented-control segmented-full contribution-quick-amounts" role="group" aria-label="Quick contribution amounts">
+          {quickAmounts.map(({ label, value }) => <button key={label} type="button" className={Number(amount) === value ? 'selected' : ''} aria-pressed={Number(amount) === value} aria-label={`Set contribution to ${formatCurrency(value)} (${label})`} onClick={() => { setAmount(String(value)); setError(''); }}><span>{label}</span><small>{formatCurrency(value)}</small></button>)}
+        </div>
+      </div> : <div className="inline-warning danger" role="status" style={{ marginBottom: 13 }}><CircleAlert size={14} />No spendable cash is available for a contribution right now. Add income or update the ledger first.</div>}
+      <Field label="Contribution amount (INR)" type="number" min="1" max={available || undefined} step="1" inputMode="numeric" value={amount} onChange={(event) => { setAmount(event.target.value); setError(''); }} placeholder="0" hint={available ? `Up to ${formatCurrency(available)} available without putting the challenge balance below zero.` : undefined} error={error} disabled={!available} required />
     </form>
   </Modal>;
 }
@@ -125,7 +136,7 @@ export default function SavingsGoals() {
     </Panel>
     <div className="alert-strip" style={{ marginTop: 14 }}><Sparkles size={15} /><span>Thinking about a purchase? <Link to="/decision-lab" style={{ color: 'var(--violet)', fontWeight: 650 }}>Decision Lab</Link> shows how a proposal changes your available cash before you apply it. Existing goal progress stays put until a real transfer is recorded.</span></div>
     <GoalForm key={editing?.id || (editing ? 'new-goal' : 'closed')} open={Boolean(editing)} goal={editing} onClose={() => setEditing(null)} onSave={saveGoal} />
-    <ContributionModal key={contributing?.id || 'contribution-closed'} open={Boolean(contributing)} goal={contributing} state={state} onClose={() => setContributing(null)} onContribute={contribute} />
+    <ContributionModal key={contributing?.id || 'contribution-closed'} open={Boolean(contributing)} goal={contributing} summary={summary} onClose={() => setContributing(null)} onContribute={contribute} />
     <ConfirmDialog open={Boolean(deleting)} title="Remove this savings goal?" description={`${deleting?.name || 'This goal'} will be removed. Contributions already in your ledger remain recorded as transfers.`} confirmLabel="Remove goal" danger onCancel={() => setDeleting(null)} onConfirm={deleteGoal} />
   </>;
 }

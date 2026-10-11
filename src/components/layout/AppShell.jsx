@@ -85,7 +85,7 @@ function QuickEntryModal({ open, onClose }) {
     toast(`${form.type === 'income' ? 'Income' : 'Expense'} recorded for ${formatCurrency(amount)}.`);
   };
   return <Modal open={open} onClose={handleClose} title="Add a money movement" subtitle={`Recorded against day ${summary.challengeDay} of your challenge.`} width={470} footer={<><Button variant="subtle" onClick={handleClose}>Cancel</Button><Button type="submit" form="quick-entry-form" icon={Plus}>Save entry</Button></>}>
-    <form id="quick-entry-form" onSubmit={submit}>
+    <form id="quick-entry-form" onSubmit={submit} noValidate>
       <div className="segmented-control segmented-full" style={{ marginBottom: 14 }} role="group" aria-label="Money movement type">
         <button type="button" aria-pressed={form.type === 'expense'} className={form.type === 'expense' ? 'selected' : ''} onClick={() => setForm((s) => ({ ...s, type: 'expense' }))}>Expense</button>
         <button type="button" aria-pressed={form.type === 'income'} className={form.type === 'income' ? 'selected' : ''} onClick={() => setForm((s) => ({ ...s, type: 'income' }))}>Income</button>

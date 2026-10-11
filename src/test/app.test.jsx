@@ -4,7 +4,8 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 import App from '../App.jsx';
-import { Modal } from '../components/ui/Primitives.jsx';
+import { makeFreshChallenge } from '../data/demoData.js';
+import { ConfirmDialog, Modal } from '../components/ui/Primitives.jsx';
 import { FinanceProvider } from '../context/FinanceContext.jsx';
 import { AuthProvider } from '../context/AuthContext.jsx';
 import { ToastProvider } from '../context/ToastContext.jsx';
@@ -27,17 +28,60 @@ afterEach(() => {
 });
 
 describe('authentication and onboarding flows', () => {
+  it('gives an empty fresh ledger a direct first-transaction action', async () => {
+    window.localStorage.setItem('brokemode-auth:v1', JSON.stringify({ user: { name: 'Alex Morgan', email: 'alex@brokemode.demo', demo: true, remember: true } }));
+    const fresh = makeFreshChallenge();
+    fresh.onboardingComplete = true;
+    window.localStorage.setItem('brokemode-finance:v1', JSON.stringify(fresh));
+    const user = userEvent.setup();
+    renderApp('/transactions');
+    expect(await screen.findByRole('heading', { name: 'Your ledger is ready' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Add your first transaction' }));
+    expect(await screen.findByRole('dialog', { name: 'Add transaction' })).toBeInTheDocument();
+  });
+
   it('records a new expense through the transaction dialog', async () => {
     window.localStorage.setItem('brokemode-auth:v1', JSON.stringify({ user: { name: 'Alex Morgan', email: 'alex@brokemode.demo', demo: true, remember: true } }));
     const user = userEvent.setup();
     renderApp('/transactions');
     await user.click(await screen.findByRole('button', { name: 'Add transaction' }));
     await screen.findByRole('dialog');
-    await user.type(await screen.findByLabelText('Description', { exact: false }), 'Test purchase');
+    const description = await screen.findByLabelText('Description', { exact: false });
+    await waitFor(() => expect(description).toHaveFocus());
+    await user.type(description, 'Test purchase');
     await user.type(await screen.findByRole('spinbutton'), '120');
     const submitButtons = screen.getAllByRole('button', { name: 'Add transaction' });
     await user.click(submitButtons[submitButtons.length - 1]);
     expect(await screen.findByText('₹3,670')).toBeInTheDocument();
+  });
+
+  it('keeps a clear-filters action visible while matching transactions remain', async () => {
+    window.localStorage.setItem('brokemode-auth:v1', JSON.stringify({ user: { name: 'Alex Morgan', email: 'alex@brokemode.demo', demo: true, remember: true } }));
+    const user = userEvent.setup();
+    renderApp('/transactions');
+    const search = await screen.findByRole('searchbox', { name: 'Search transactions' });
+    await user.type(search, 'Lunch');
+    expect((await screen.findAllByText('Lunch near campus')).length).toBeGreaterThan(0);
+    await user.click(screen.getByRole('button', { name: 'Clear filters' }));
+    expect(search).toHaveValue('');
+    expect(await screen.findAllByText('Weekly grocery run')).toHaveLength(2);
+  });
+
+  it('offers a spendable-cash shortcut when funding a savings goal', async () => {
+    window.localStorage.setItem('brokemode-auth:v1', JSON.stringify({ user: { name: 'Alex Morgan', email: 'alex@brokemode.demo', demo: true, remember: true } }));
+    const user = userEvent.setup();
+    renderApp('/savings-goals');
+    await user.click((await screen.findAllByRole('button', { name: 'Contribute' }))[0]);
+    await screen.findByRole('dialog', { name: 'Add to Emergency fund' });
+    const amount = screen.getByLabelText(/Contribution amount \(INR\)/);
+    expect(amount).toHaveAttribute('max', '6450');
+    expect(document.getElementById(amount.getAttribute('aria-describedby'))).toHaveTextContent('Up to ₹6,450 available');
+    await user.click(screen.getByRole('button', { name: 'Set contribution to ₹6,450 (Max)' }));
+    expect(amount).toHaveValue(6450);
+    await user.click(screen.getByRole('button', { name: 'Confirm contribution' }));
+    expect(await screen.findByText('₹6,450 added to Emergency fund.')).toBeInTheDocument();
+    const spendable = screen.getByText('Money still spendable').closest('.overview-stat');
+    await waitFor(() => expect(spendable).toHaveTextContent('₹0'));
   });
 
   it('shows the public landing first and lets visitors enter the seeded demo', async () => {
@@ -77,7 +121,9 @@ describe('authentication and onboarding flows', () => {
   it('supports a complete sign-up and three-step first challenge on a compact form', async () => {
     const user = userEvent.setup();
     renderApp('/signup');
-    await user.type(await screen.findByLabelText('Full name', { exact: false }), 'Sam Lee');
+    const fullNameField = await screen.findByLabelText('Full name', { exact: false });
+    expect(fullNameField).toBeRequired();
+    await user.type(fullNameField, 'Sam Lee');
     await user.type(await screen.findByLabelText('Email address', { exact: false }), 'sam@example.com');
     await user.type(await screen.findByLabelText('Password'), 'BudgetSafe12!');
     await user.type(await screen.findByLabelText('Confirm password', { exact: false }), 'BudgetSafe12!');
@@ -203,5 +249,20 @@ describe('keyboard and dialog accessibility', () => {
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(trigger).toHaveFocus();
+  });
+
+  it('places initial focus on the safe choice in a confirmation dialog', async () => {
+    function ConfirmationHarness() {
+      const [open, setOpen] = React.useState(false);
+      return <>
+        <button type="button" onClick={() => setOpen(true)}>Open confirmation</button>
+        <ConfirmDialog open={open} title="Delete this item?" description="This action removes the item." confirmLabel="Delete" danger onCancel={() => setOpen(false)} onConfirm={() => setOpen(false)} />
+      </>;
+    }
+    const user = userEvent.setup();
+    render(<ConfirmationHarness />);
+    await user.click(screen.getByRole('button', { name: 'Open confirmation' }));
+    await screen.findByRole('dialog', { name: 'Delete this item?' });
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Keep it' })).toHaveFocus());
   });
 });
