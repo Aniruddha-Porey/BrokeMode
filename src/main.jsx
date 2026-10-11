@@ -1,0 +1,22 @@
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom';
+import App from './App.jsx';
+import { FinanceProvider } from './context/FinanceContext.jsx';
+import { AuthProvider } from './context/AuthContext.jsx';
+import { ToastProvider } from './context/ToastContext.jsx';
+import './index.css';
+
+createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <FinanceProvider>
+      <AuthProvider>
+        <ToastProvider>
+          <BrowserRouter>
+            <App />
+          </BrowserRouter>
+        </ToastProvider>
+      </AuthProvider>
+    </FinanceProvider>
+  </React.StrictMode>,
+);
