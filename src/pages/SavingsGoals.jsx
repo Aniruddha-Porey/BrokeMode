@@ -124,10 +124,10 @@ export default function SavingsGoals() {
       <div className="overview-stat"><div className="metric-topline"><span>Transferred this challenge</span></div><div className="metric-number">{formatCurrency(summary.transfers)}</div><div className="metric-foot">Contributions recorded as transfers</div></div>
       <div className="overview-stat"><div className="metric-topline"><span>Money still spendable</span></div><div className="metric-number">{formatCurrency(summary.spendableBalance)}</div><div className="metric-foot">After expenses and goal contributions</div></div>
     </div>
-    <Panel style={{ marginBottom: 15, borderColor: 'rgba(196,243,107,.23)' }}>
-      <div className="row-between" style={{ gap: 22, alignItems: 'flex-start' }}>
+    <Panel className="savings-safety-net" style={{ marginBottom: 15, borderColor: 'rgba(196,243,107,.23)' }}>
+      <div className="row-between savings-safety-net-row">
         <div className="goal-top"><span className="goal-icon"><ShieldCheck size={19} /></span><div><div className="eyebrow" style={{ marginBottom: 4, color: 'var(--lime)' }}>YOUR SAFETY NET</div><h3 style={{ margin: 0, fontSize: 15 }}>{featured?.name || 'Emergency fund'}</h3><p style={{ margin: '4px 0 0', color: 'var(--muted)', fontSize: 10 }}>A little buffer can make a hard month feel more manageable.</p></div></div>
-        <div style={{ minWidth: 180, textAlign: 'right' }}><div className="money" style={{ fontSize: 22, fontWeight: 650, letterSpacing: '-.04em' }}>{featured ? formatCurrency(goalStats[featured.id]?.saved || 0) : formatCurrency(0)} <span style={{ color: 'var(--muted)', fontSize: 11, fontWeight: 500 }}>of {featured ? formatCurrency(featured.target) : formatCurrency(10000)}</span></div><div style={{ marginTop: 8 }}><ProgressBar value={featured ? goalStats[featured.id]?.progress || 0 : 0} tone="lime" height={6} label="Emergency fund progress" /></div></div>
+        <div className="savings-safety-net-balance"><div className="money" style={{ fontSize: 22, fontWeight: 650, letterSpacing: '-.04em' }}>{featured ? formatCurrency(goalStats[featured.id]?.saved || 0) : formatCurrency(0)} <span style={{ color: 'var(--muted)', fontSize: 11, fontWeight: 500 }}>of {featured ? formatCurrency(featured.target) : formatCurrency(10000)}</span></div><div style={{ marginTop: 8 }}><ProgressBar value={featured ? goalStats[featured.id]?.progress || 0 : 0} tone="lime" height={6} label="Emergency fund progress" /></div></div>
       </div>
     </Panel>
     <Panel>

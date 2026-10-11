@@ -183,6 +183,16 @@ describe('authentication and onboarding flows', () => {
     expect(billGrid.style.gridTemplateColumns).toBe('');
   });
 
+  it('keeps the savings safety-net layout sized by responsive CSS', async () => {
+    window.localStorage.setItem('brokemode-auth:v1', JSON.stringify({ user: { name: 'Alex Morgan', email: 'alex@brokemode.demo', demo: true, remember: true } }));
+    renderApp('/savings-goals');
+    const safetyNet = (await screen.findByText('YOUR SAFETY NET')).closest('.savings-safety-net');
+    const balance = safetyNet.querySelector('.savings-safety-net-balance');
+    expect(safetyNet.querySelector('.savings-safety-net-row')).toBeInTheDocument();
+    expect(balance.style.minWidth).toBe('');
+    expect(screen.getByRole('button', { name: 'More' })).toBeInTheDocument();
+  });
+
   it('renders every authenticated product route without runtime errors', async () => {
     window.localStorage.setItem('brokemode-auth:v1', JSON.stringify({ user: { name: 'Alex Morgan', email: 'alex@brokemode.demo', demo: true, remember: true } }));
     const routes = [

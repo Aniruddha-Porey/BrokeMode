@@ -24,7 +24,7 @@ Browser
 - **`finance/calculations.js`** is the authoritative source for ledger totals, commitments, forecasts, budget metrics, goals, risk, and Decision Lab scenarios. Pages display its results rather than reimplementing financial rules.
 - **`Primitives.jsx`** provides shared buttons, fields, progress, dialogs, and focus management. `AppShell` owns workspace navigation and global quick entry.
 
-Pages are imported lazily by route so the public landing/auth flows do not have to load every authenticated screen up front. Recharts code is emitted in a separate chart chunk.
+Pages are imported lazily by route so the public landing/auth flows do not have to load every authenticated screen up front. Recharts code is emitted in a separate chart chunk. Landing and auth photography is stored locally as resized WebP; below-the-fold feature images use native lazy loading and async decoding.
 
 ## State flow and persistence
 

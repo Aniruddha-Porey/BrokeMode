@@ -35,12 +35,12 @@ npm audit --audit-level=moderate
 
 ## Responsive review checklist
 
-Test the page at approximately **1440 px, 1024 px, 768 px, 390 px, and 320 px** wide. Verify that:
+Test the page at approximately **1440 px, 980 px, 860/761/760 px, 520 px, 390 px, and 320 px** wide, including both sides of the compact/mobile navigation breakpoints. Verify that:
 
 - There is no page-level horizontal scrolling or clipped primary action.
 - Dashboard and secondary-page grids collapse before their columns become cramped. Avoid inline `gridTemplateColumns` on responsive grids; define base and breakpoint values in CSS.
 - Tables switch to their mobile list presentation or have an intentional horizontal scroller.
-- Mobile navigation, settings section navigation, dialogs, and toasts stay within the viewport and remain operable by touch and keyboard.
+- Mobile navigation, settings section navigation, dialogs, and toasts stay within the viewport and remain operable by touch and keyboard; primary mobile navigation targets are at least 40 px tall.
 - Focus is visible, the skip link works, dialogs trap/restore focus, and icon-only controls have accessible names.
 - `prefers-reduced-motion` is respected.
 

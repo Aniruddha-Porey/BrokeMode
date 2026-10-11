@@ -12,9 +12,9 @@ import { useFinance } from '../context/FinanceContext.jsx';
 const sampleDailySpend = [180, 220, 95, 460, 130, 300, 280, 150, 200, 500, 350, 685];
 
 const features = [
-  { icon: Gauge, image: '/images/landing-daily-plan.jpg', alt: 'Hands reviewing a budget on a phone beside a notebook and tea.', title: 'A number you can use today', copy: 'Get a daily safe-to-spend amount that respects the days and bills still ahead.' },
-  { icon: FlaskConical, image: '/images/landing-decision.jpg', alt: 'A cafe moment before deciding whether to make a small purchase.', title: 'Try the choice before you make it', copy: 'See how a purchase shifts your runway, then keep it as a what-if—or apply it once.' },
-  { icon: Target, image: '/images/landing-goals.jpg', alt: 'A coin going into a savings jar beside a phone and notebook.', title: 'Make room for what matters', copy: 'Keep goals, essentials, and real life in the same honest picture.' },
+  { icon: Gauge, image: '/images/landing-daily-plan.webp', alt: 'Hands reviewing a budget on a phone beside a notebook and tea.', title: 'A number you can use today', copy: 'Get a daily safe-to-spend amount that respects the days and bills still ahead.' },
+  { icon: FlaskConical, image: '/images/landing-decision.webp', alt: 'A cafe moment before deciding whether to make a small purchase.', title: 'Try the choice before you make it', copy: 'See how a purchase shifts your runway, then keep it as a what-if—or apply it once.' },
+  { icon: Target, image: '/images/landing-goals.webp', alt: 'A coin going into a savings jar beside a phone and notebook.', title: 'Make room for what matters', copy: 'Keep goals, essentials, and real life in the same honest picture.' },
 ];
 
 function Brand() {
