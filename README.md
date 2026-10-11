@@ -55,7 +55,8 @@ npm run check   # lint, tests, then production build
 ## Architecture and contributing
 
 - [Architecture and finance invariants](docs/architecture.md) documents route/state boundaries, persistence, and the authoritative money model.
-- [Contributing guide](CONTRIBUTING.md) covers setup, required checks, design conventions, and a 320–1440 px responsive review checklist.
+- [Contributing guide](CONTRIBUTING.md) covers setup, required checks, design conventions, and responsive review.
+- [Security and data handling](SECURITY.md) explains browser-only storage, demo auth limits, sanitization, and deployment headers.
 
 The app uses a responsive navigation shell, mobile bottom navigation, accessible forms and dialogs, visible focus states, INR/Indian number formatting, a dark/light theme toggle, and a glass-finished dark-first design token system. The public landing page uses locally bundled lifestyle photos and a clearly labeled sample-month snapshot; those figures are illustrative, not live user data.
 

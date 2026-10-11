@@ -28,6 +28,7 @@ npm audit --audit-level=moderate
 - Keep domain calculations in `src/finance/calculations.js`; do not duplicate finance formulas in page components.
 - Treat actions and `localStorage` values as untrusted. Reuse `src/finance/validation.js`, bound collection sizes and text, and return safe reducer state for invalid actions.
 - Persist only demo-safe profile/session metadata. Never add password or bank-credential persistence, or imply the prototype is production-secure.
+- Keep static-host security headers synchronized in `public/_headers` and `vercel.json`; avoid adding third-party script, image, or font origins without an explicit security review.
 - Use INR formatting via `src/finance/formatters.js` and preserve whole-rupee input conventions.
 - Prefer shared UI primitives over one-off controls. Use visible focus states, explicit button types, accessible names for icon-only controls, associated labels/errors, and meaningful live feedback.
 - Preserve demo semantics: fresh day 1 and seeded day 12 are separate; starting funds plus income minus actual expenses is the ledger; transfers reduce spendable balance but are not expenses; paid/cancelled bill logic and negative forecast warnings must remain correct.
