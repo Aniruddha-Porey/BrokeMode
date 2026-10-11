@@ -5,6 +5,7 @@ import { useFinance } from '../context/FinanceContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { getGoalStats } from '../finance/calculations.js';
 import { daysBetween } from '../finance/dates.js';
+import { isISODate, parseMoney } from '../finance/validation.js';
 import { formatCurrency, formatDate } from '../finance/formatters.js';
 import { makeId } from '../utils/id.js';
 import { Badge, Button, ConfirmDialog, Field, Modal, PageHeading, Panel, ProgressBar, SectionHeading } from '../components/ui/Primitives.jsx';
@@ -19,21 +20,21 @@ function GoalForm({ open, goal, onClose, onSave }) {
   const [error, setError] = useState('');
   const save = (event) => {
     event.preventDefault();
-    const amount = Math.round(Number(target));
+    const amount = parseMoney(target, { min: 1 });
     if (!name.trim()) { setError('Give this goal a name.'); return; }
-    if (!Number.isFinite(amount) || amount < 1) { setError('Set a target greater than ₹0.'); return; }
-    if (!targetDate) { setError('Choose a target date.'); return; }
+    if (amount === null) { setError('Set a whole-rupee target between ₹1 and ₹1,00,00,00,000.'); return; }
+    if (!isISODate(targetDate)) { setError('Choose a valid target date.'); return; }
     onSave({ ...goal, id: goal?.id || makeId('goal'), name: name.trim(), target: amount, targetDate, savedAtStart: Number(goal?.savedAtStart) || 0, icon: goal?.icon || 'sparkles' });
     onClose();
   };
   return <Modal open={open} onClose={onClose} title={goal?.id ? 'Edit savings goal' : 'Create a savings goal'} subtitle="A goal is a plan, not a separate bank account in this demo." width={480} footer={<><Button variant="subtle" onClick={onClose}>Cancel</Button><Button type="submit" form="goal-form">Save goal</Button></>}>
     <form id="goal-form" onSubmit={save}>
       <div className="modal-form-grid">
-        <Field className="span-2" label="Goal name" value={name} onChange={(event) => setName(event.target.value)} placeholder="e.g. A weekend away" required />
-        <Field label="Target amount (INR)" type="number" min="1" step="1" value={target} onChange={(event) => setTarget(event.target.value)} placeholder="0" required />
+        <Field className="span-2" label="Goal name" maxLength={80} value={name} onChange={(event) => setName(event.target.value)} placeholder="e.g. A weekend away" required />
+        <Field label="Target amount (INR)" type="number" min="1" max="1000000000" step="1" value={target} onChange={(event) => setTarget(event.target.value)} placeholder="0" required />
         <Field label="Target date" type="date" value={targetDate} onChange={(event) => setTargetDate(event.target.value)} required />
       </div>
-      {error && <div className="field-error" style={{ marginTop: 10 }}>{error}</div>}
+      {error && <div className="field-error" role="alert" style={{ marginTop: 10 }}>{error}</div>}
     </form>
   </Modal>;
 }
@@ -43,16 +44,16 @@ function ContributionModal({ open, goal, state, onClose, onContribute }) {
   const [error, setError] = useState('');
   const submit = (event) => {
     event.preventDefault();
-    const value = Math.round(Number(amount));
-    if (!Number.isFinite(value) || value < 1) { setError('Enter a contribution greater than ₹0.'); return; }
+    const value = parseMoney(amount, { min: 1 });
+    if (value === null) { setError('Enter a whole-rupee contribution between ₹1 and ₹1,00,00,00,000.'); return; }
     onContribute(value);
   };
   const close = () => { setError(''); setAmount(''); onClose(); };
   return <Modal open={open} onClose={close} title={`Add to ${goal?.name || 'your goal'}`} subtitle="This moves money out of everyday spendable cash and into goal progress — it is not an expense." width={450} footer={<><Button variant="subtle" onClick={close}>Cancel</Button><Button type="submit" form="contribution-form">Confirm contribution</Button></>}>
     <form id="contribution-form" onSubmit={submit}>
       <div className="alert-strip" style={{ marginBottom: 14 }}><ShieldCheck size={15} /><span>Spendable balance today: <strong>{formatCurrency(state.startingBudget + state.transactions.filter((item) => item.type === 'income').reduce((total, item) => total + item.amount, 0) - state.transactions.filter((item) => item.type === 'expense' || item.type === 'transfer').reduce((total, item) => total + item.amount, 0))}</strong></span></div>
-      <Field label="Contribution amount (INR)" type="number" min="1" step="1" value={amount} onChange={(event) => setAmount(event.target.value)} placeholder="0" required />
-      {error && <div className="field-error" style={{ marginTop: 10 }}>{error}</div>}
+      <Field label="Contribution amount (INR)" type="number" min="1" max="1000000000" step="1" value={amount} onChange={(event) => setAmount(event.target.value)} placeholder="0" required />
+      {error && <div className="field-error" role="alert" style={{ marginTop: 10 }}>{error}</div>}
     </form>
   </Modal>;
 }

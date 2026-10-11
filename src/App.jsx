@@ -4,6 +4,7 @@ import { Home, WalletCards } from 'lucide-react';
 import { useAuth } from './context/AuthContext.jsx';
 import { useFinance } from './context/FinanceContext.jsx';
 import AppShell from './components/layout/AppShell.jsx';
+
 const Landing = lazy(() => import('./pages/Landing.jsx'));
 const Login = lazy(() => import('./pages/Login.jsx'));
 const SignUp = lazy(() => import('./pages/SignUp.jsx'));
@@ -16,7 +17,48 @@ const SavingsGoals = lazy(() => import('./pages/SavingsGoals.jsx'));
 const BillsSubscriptions = lazy(() => import('./pages/BillsSubscriptions.jsx'));
 const Insights = lazy(() => import('./pages/Insights.jsx'));
 const Settings = lazy(() => import('./pages/Settings.jsx'));
-const renderPage = (Page) => <Suspense fallback={<div className="route-loading" role="status">Loading your money workspace…</div>}><Page /></Suspense>;
+
+const routeTitles = {
+  '/': 'BrokeMode — Survive the Month. Master Your Money.',
+  '/login': 'Sign in',
+  '/signup': 'Create account',
+  '/onboarding': 'Set up your challenge',
+  '/dashboard': 'Overview',
+  '/decision-lab': 'Decision Lab',
+  '/transactions': 'Transactions',
+  '/budgets': 'Budgets',
+  '/savings-goals': 'Savings goals',
+  '/bills-subscriptions': 'Bills & subscriptions',
+  '/insights': 'Insights',
+  '/settings': 'Settings',
+};
+
+const renderPage = (Page) => <Suspense fallback={<div className="route-loading" role="status" aria-live="polite">Loading your money workspace…</div>}><Page /></Suspense>;
+
+class RouteErrorBoundary extends React.Component {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, info) {
+    if (import.meta.env.DEV) console.error('BrokeMode route failed to render.', error, info.componentStack);
+  }
+
+  render() {
+    if (!this.state.hasError) return this.props.children;
+    return <main id="main-content" className="app-error-screen" role="alert" tabIndex={-1}>
+      <span className="brand-mark" aria-hidden="true"><WalletCards size={19} /></span>
+      <h1>We hit a snag.</h1>
+      <p>Your demo data is still saved on this device. Reload the workspace to try again.</p>
+      <div className="app-error-actions">
+        <button className="btn btn-primary btn-md" type="button" onClick={() => window.location.reload()}>Reload workspace</button>
+        <Link className="btn btn-outline btn-md" to="/">Return to BrokeMode</Link>
+      </div>
+    </main>;
+  }
+}
 
 function RequireAuth() {
   const { isAuthenticated } = useAuth();
@@ -46,53 +88,58 @@ function OnboardingRoute() {
 
 function NotFound() {
   const { isAuthenticated } = useAuth();
-  return <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: 22 }}>
+  return <main id="main-content" className="not-found-screen" tabIndex={-1}>
     <div className="panel" style={{ width: 'min(420px,100%)', textAlign: 'center', padding: 32 }}>
-      <span className="brand-mark" style={{ margin: '0 auto 15px' }}><WalletCards size={19} /></span>
+      <span className="brand-mark" style={{ margin: '0 auto 15px' }} aria-hidden="true"><WalletCards size={19} /></span>
       <div className="eyebrow">404 · WRONG TURN</div><h1 style={{ margin: 0, fontSize: 24, letterSpacing: '-.05em' }}>This page isn’t in the plan.</h1><p className="muted" style={{ fontSize: 11, margin: '8px 0 20px' }}>The route may have moved. Your money data is still right where you left it.</p>
       <Link className="btn btn-primary btn-md" to={isAuthenticated ? '/dashboard' : '/login'}><Home size={16} /><span>Back to {isAuthenticated ? 'overview' : 'sign in'}</span></Link>
     </div>
-  </div>;
+  </main>;
 }
 
 function RouteEffects() {
   const location = useLocation();
   const { state } = useFinance();
+  const pageTitle = routeTitles[location.pathname] || 'Page not found';
   useEffect(() => {
     document.documentElement.dataset.theme = state.preferences?.appearance || 'dark';
   }, [state.preferences?.appearance]);
   useEffect(() => {
+    document.title = location.pathname === '/' ? pageTitle : `${pageTitle} · BrokeMode`;
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
-  }, [location.pathname]);
-  return null;
+  }, [location.pathname, pageTitle]);
+  return <span className="sr-only" role="status" aria-live="polite" aria-atomic="true">{pageTitle}</span>;
 }
 
 export default function App() {
   return <>
+    <a className="skip-link" href="#main-content">Skip to main content</a>
     <RouteEffects />
-    <Routes>
-      <Route path="/" element={<HomeRoute />} />
-      <Route element={<GuestOnly />}>
-        <Route path="/login" element={renderPage(Login)} />
-        <Route path="/signup" element={renderPage(SignUp)} />
-      </Route>
-      <Route element={<RequireAuth />}>
-        <Route path="/onboarding" element={<OnboardingRoute />} />
-        <Route element={<RequireOnboardingComplete />}>
-          <Route element={<AppShell><Outlet /></AppShell>}>
-            <Route path="/dashboard" element={renderPage(Dashboard)} />
-            <Route path="/decision-lab" element={renderPage(DecisionLab)} />
-            <Route path="/transactions" element={renderPage(Transactions)} />
-            <Route path="/budgets" element={renderPage(Budgets)} />
-            <Route path="/savings-goals" element={renderPage(SavingsGoals)} />
-            <Route path="/bills-subscriptions" element={renderPage(BillsSubscriptions)} />
-            <Route path="/insights" element={renderPage(Insights)} />
-            <Route path="/settings" element={renderPage(Settings)} />
+    <RouteErrorBoundary>
+      <Routes>
+        <Route path="/" element={<HomeRoute />} />
+        <Route element={<GuestOnly />}>
+          <Route path="/login" element={renderPage(Login)} />
+          <Route path="/signup" element={renderPage(SignUp)} />
+        </Route>
+        <Route element={<RequireAuth />}>
+          <Route path="/onboarding" element={<OnboardingRoute />} />
+          <Route element={<RequireOnboardingComplete />}>
+            <Route element={<AppShell><Outlet /></AppShell>}>
+              <Route path="/dashboard" element={renderPage(Dashboard)} />
+              <Route path="/decision-lab" element={renderPage(DecisionLab)} />
+              <Route path="/transactions" element={renderPage(Transactions)} />
+              <Route path="/budgets" element={renderPage(Budgets)} />
+              <Route path="/savings-goals" element={renderPage(SavingsGoals)} />
+              <Route path="/bills-subscriptions" element={renderPage(BillsSubscriptions)} />
+              <Route path="/insights" element={renderPage(Insights)} />
+              <Route path="/settings" element={renderPage(Settings)} />
+            </Route>
           </Route>
         </Route>
-      </Route>
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </RouteErrorBoundary>
   </>;
 }

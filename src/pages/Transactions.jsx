@@ -4,6 +4,7 @@ import { useFinance } from '../context/FinanceContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { formatCurrency, formatDate } from '../finance/formatters.js';
 import { compareDates } from '../finance/dates.js';
+import { isISODate, parseMoney } from '../finance/validation.js';
 import { filterTransactions, sortTransactions } from '../finance/transactionFilters.js';
 import { categoriesForState } from '../finance/categories.js';
 import { makeId } from '../utils/id.js';
@@ -20,10 +21,10 @@ function TransactionForm({ open, onClose, initial, state, onSave }) {
   const close = () => { setError(''); onClose(); };
   const submit = (event) => {
     event.preventDefault();
-    const amount = Math.round(Number(form.amount));
+    const amount = parseMoney(form.amount, { min: 1 });
     if (!form.description.trim()) { setError('Add a description so you can recognize this entry later.'); return; }
-    if (!Number.isFinite(amount) || amount < 1) { setError('Amount must be at least ₹1.'); return; }
-    if (compareDates(form.date, state.challengeStartDate) < 0 || compareDates(form.date, state.currentDate) > 0) { setError('Choose a date within the current challenge and not after today.'); return; }
+    if (amount === null) { setError('Enter a whole-rupee amount between ₹1 and ₹1,00,00,00,000.'); return; }
+    if (!isISODate(form.date) || compareDates(form.date, state.challengeStartDate) < 0 || compareDates(form.date, state.currentDate) > 0) { setError('Choose a valid date within the current challenge and not after today.'); return; }
     if (form.type === 'transfer' && !form.goalId) { setError('Choose the savings goal receiving this transfer.'); return; }
     const cleanForm = { ...form };
     if (form.type !== 'expense') { delete cleanForm.billId; delete cleanForm.billDueDate; }
@@ -32,18 +33,18 @@ function TransactionForm({ open, onClose, initial, state, onSave }) {
   };
   return <Modal open={open} onClose={close} title={isEditing ? 'Edit transaction' : 'Add transaction'} subtitle="Keep the ledger aligned with what actually happened." width={530} footer={<><Button variant="subtle" onClick={close}>Cancel</Button><Button type="submit" form="transaction-form" icon={isEditing ? Edit2 : Plus}>{isEditing ? 'Save changes' : 'Add transaction'}</Button></>}>
     <form id="transaction-form" onSubmit={submit}>
-      <div className="segmented-control segmented-full" style={{ marginBottom: 15 }}>
-        {['expense', 'income', 'transfer'].map((type) => <button key={type} type="button" className={form.type === type ? 'selected' : ''} onClick={() => { set('type', type); setError(''); }}>{typeLabel[type]}</button>)}
+      <div className="segmented-control segmented-full" style={{ marginBottom: 15 }} role="group" aria-label="Transaction type">
+        {['expense', 'income', 'transfer'].map((type) => <button key={type} type="button" aria-pressed={form.type === type} className={form.type === type ? 'selected' : ''} onClick={() => { set('type', type); setError(''); }}>{typeLabel[type]}</button>)}
       </div>
       <div className="modal-form-grid">
-        <Field className="span-2" label="Description" value={form.description} onChange={(event) => set('description', event.target.value)} placeholder="e.g. Groceries, salary, or emergency fund" required />
+        <Field className="span-2" label="Description" maxLength={120} value={form.description} onChange={(event) => set('description', event.target.value)} placeholder="e.g. Groceries, salary, or emergency fund" required />
         {form.type === 'expense' && <SelectField label="Category" value={form.category} onChange={(event) => set('category', event.target.value)} options={categoriesForState(state)} />}
         {form.type === 'transfer' && <SelectField label="Move into goal" value={form.goalId} onChange={(event) => set('goalId', event.target.value)} options={[{ value: '', label: 'Choose a goal' }, ...state.goals.map((goal) => ({ value: goal.id, label: goal.name }))]} />}
-        <Field label="Amount (INR)" type="number" min="1" step="1" value={form.amount} onChange={(event) => set('amount', event.target.value)} placeholder="0" required />
+        <Field label="Amount (INR)" type="number" min="1" max="1000000000" step="1" value={form.amount} onChange={(event) => set('amount', event.target.value)} placeholder="0" required />
         <Field label="Date" type="date" min={state.challengeStartDate} max={state.currentDate} value={form.date} onChange={(event) => set('date', event.target.value)} required />
       </div>
       <p className="tiny-note" style={{ margin: '12px 0 0' }}>{form.type === 'transfer' ? 'A transfer increases goal progress and reduces spendable cash, but is not counted as consumption spending.' : form.type === 'income' ? 'Income increases your ledger balance. It is not treated as budget spending.' : 'An expense is counted once when it is recorded.'}</p>
-      {error && <div className="field-error" style={{ marginTop: 10 }}>{error}</div>}
+      {error && <div className="field-error" role="alert" style={{ marginTop: 10 }}>{error}</div>}
     </form>
   </Modal>;
 }

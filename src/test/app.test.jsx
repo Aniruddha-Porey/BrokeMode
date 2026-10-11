@@ -1,9 +1,10 @@
 import React from 'react';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 import App from '../App.jsx';
+import { Modal } from '../components/ui/Primitives.jsx';
 import { FinanceProvider } from '../context/FinanceContext.jsx';
 import { AuthProvider } from '../context/AuthContext.jsx';
 import { ToastProvider } from '../context/ToastContext.jsx';
@@ -20,6 +21,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
   window.localStorage.clear();
   window.sessionStorage.clear();
 });
@@ -43,6 +45,8 @@ describe('authentication and onboarding flows', () => {
     const user = userEvent.setup();
     renderApp('/');
     expect(await screen.findByRole('heading', { name: /Survive the month\. Stay in control\./i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Skip to main content' })).toHaveAttribute('href', '#main-content');
+    expect(document.getElementById('main-content')).toBeInTheDocument();
     expect(screen.getByRole('group', { name: 'Illustrative BrokeMode month snapshot' })).toBeInTheDocument();
     expect(screen.getByText('₹6,450')).toBeInTheDocument();
     expect(screen.getByRole('img', { name: '35.5 percent of the challenge fund spent' })).toBeInTheDocument();
@@ -75,7 +79,7 @@ describe('authentication and onboarding flows', () => {
     renderApp('/signup');
     await user.type(await screen.findByLabelText('Full name', { exact: false }), 'Sam Lee');
     await user.type(await screen.findByLabelText('Email address', { exact: false }), 'sam@example.com');
-    await user.type(await screen.findByLabelText('Create password'), 'BudgetSafe12!');
+    await user.type(await screen.findByLabelText('Password'), 'BudgetSafe12!');
     await user.type(await screen.findByLabelText('Confirm password', { exact: false }), 'BudgetSafe12!');
     await user.click(screen.getByRole('checkbox'));
     await user.click(screen.getByRole('button', { name: 'Create account' }));
@@ -87,6 +91,36 @@ describe('authentication and onboarding flows', () => {
     expect(await screen.findByRole('heading', { name: 'Your month, with room to move.' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Start my challenge' }));
     expect(await screen.findByRole('heading', { name: 'Make your money count.' })).toBeInTheDocument();
+  });
+
+  it('exports the settings ledger as a downloadable CSV file', async () => {
+    window.localStorage.setItem('brokemode-auth:v1', JSON.stringify({ user: { name: 'Alex Morgan', email: 'alex@brokemode.demo', demo: true, remember: true } }));
+    const createDescriptor = Object.getOwnPropertyDescriptor(URL, 'createObjectURL');
+    const revokeDescriptor = Object.getOwnPropertyDescriptor(URL, 'revokeObjectURL');
+    const createObjectURL = vi.fn(() => 'blob:brokemode-export');
+    Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: createObjectURL });
+    Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: vi.fn() });
+    const anchorClick = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+    const originalSetTimeout = window.setTimeout;
+    vi.spyOn(window, 'setTimeout').mockImplementation((callback, delay, ...args) => {
+      if (delay === 0 && typeof callback === 'function') { callback(...args); return 0; }
+      return originalSetTimeout(callback, delay, ...args);
+    });
+    try {
+      const user = userEvent.setup();
+      renderApp('/settings');
+      await screen.findByRole('heading', { name: 'Make BrokeMode yours.' });
+      await user.click(screen.getByRole('button', { name: 'Export CSV' }));
+      expect(createObjectURL).toHaveBeenCalledOnce();
+      expect(createObjectURL.mock.calls[0][0].type).toBe('text/csv;charset=utf-8');
+      expect(anchorClick).toHaveBeenCalledOnce();
+      expect(await screen.findByText('CSV export prepared.')).toBeInTheDocument();
+    } finally {
+      if (createDescriptor) Object.defineProperty(URL, 'createObjectURL', createDescriptor);
+      else delete URL.createObjectURL;
+      if (revokeDescriptor) Object.defineProperty(URL, 'revokeObjectURL', revokeDescriptor);
+      else delete URL.revokeObjectURL;
+    }
   });
 
   it('renders every authenticated product route without runtime errors', async () => {
@@ -108,4 +142,66 @@ describe('authentication and onboarding flows', () => {
     }
   });
 
+  it('fails closed when a stored demo user is malformed or tampered with', async () => {
+    window.localStorage.setItem('brokemode-auth:v1', JSON.stringify({ user: { name: '<script>alert(1)</script>', email: '<img>@example.com', demo: true } }));
+    renderApp('/dashboard');
+    expect(await screen.findByRole('heading', { name: 'Welcome back' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Make your money count.' })).not.toBeInTheDocument();
+  });
+});
+
+describe('app shell navigation accessibility', () => {
+  it('warns when browser storage is unavailable', async () => {
+    window.localStorage.setItem('brokemode-auth:v1', JSON.stringify({ user: { name: 'Alex Morgan', email: 'alex@brokemode.demo', demo: true, remember: true } }));
+    const originalSetItem = Storage.prototype.setItem;
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function setItem(key, value) {
+      if (key === 'brokemode-finance:v1') throw new DOMException('Storage quota exceeded', 'QuotaExceededError');
+      return originalSetItem.call(this, key, value);
+    });
+    renderApp('/dashboard');
+    expect(await screen.findByText(/Browser storage is unavailable/)).toHaveTextContent('will be lost when you reload or close the tab');
+  });
+
+  it('opens the mobile navigation as a modal dialog and closes it with Escape', async () => {
+    window.localStorage.setItem('brokemode-auth:v1', JSON.stringify({ user: { name: 'Alex Morgan', email: 'alex@brokemode.demo', demo: true, remember: true } }));
+    const user = userEvent.setup();
+    renderApp('/dashboard');
+    const trigger = await screen.findByRole('button', { name: 'Open navigation' });
+    const drawer = document.getElementById(trigger.getAttribute('aria-controls'));
+    expect(drawer).toBeInTheDocument();
+    expect(drawer.parentElement).toHaveAttribute('hidden');
+    await user.click(trigger);
+    expect(await screen.findByRole('dialog', { name: 'Mobile navigation' })).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog', { name: 'Mobile navigation' })).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
+  });
+});
+
+describe('keyboard and dialog accessibility', () => {
+  it('announces a labelled modal, traps Tab focus, closes on Escape, and restores focus', async () => {
+    function FocusModalHarness() {
+      const [open, setOpen] = React.useState(false);
+      return <>
+        <button type="button" onClick={() => setOpen(true)}>Open keyboard dialog</button>
+        <Modal open={open} title="Keyboard dialog" subtitle="Use Tab or Escape to leave this dialog." onClose={() => setOpen(false)} footer={<button type="button">Save choice</button>}>
+          <button type="button">Dialog action</button>
+        </Modal>
+      </>;
+    }
+
+    const user = userEvent.setup();
+    render(<FocusModalHarness />);
+    const trigger = screen.getByRole('button', { name: 'Open keyboard dialog' });
+    await user.click(trigger);
+    const dialog = await screen.findByRole('dialog', { name: 'Keyboard dialog' });
+    expect(dialog).toHaveAttribute('aria-describedby');
+    const close = screen.getByRole('button', { name: 'Close dialog' });
+    await waitFor(() => expect(close).toHaveFocus());
+    await user.keyboard('{Shift>}{Tab}{/Shift}');
+    expect(screen.getByRole('button', { name: 'Save choice' })).toHaveFocus();
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
+  });
 });

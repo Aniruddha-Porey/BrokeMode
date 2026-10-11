@@ -95,7 +95,7 @@ export default function Landing() {
       </div>
     </header>
 
-    <main>
+    <main id="main-content" tabIndex={-1}>
       <section className="landing-hero" aria-labelledby="landing-title">
         <div className="landing-hero-copy">
           <div className="landing-kicker"><span className="landing-kicker-spark"><Sparkles size={13} /></span> BROKE BUT FUNCTIONAL · THE 30-DAY CHALLENGE</div>

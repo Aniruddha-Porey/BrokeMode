@@ -8,7 +8,8 @@
     "build": "node ./node_modules/vite/bin/vite.js build",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "check": "npm run test && npm run build"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^4.3.4",

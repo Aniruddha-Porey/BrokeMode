@@ -1,23 +1,36 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { sanitizeEmail, sanitizeText } from '../finance/validation.js';
 
 const AuthContext = createContext(null);
 const AUTH_KEY = 'brokemode-auth:v1';
 const SESSION_KEY = 'brokemode-session:v1';
-const defaultDemoUser = { name: 'Alex Morgan', email: 'alex@brokemode.demo', demo: true, remember: true };
+const defaultDemoUser = Object.freeze({ name: 'Alex Morgan', email: 'alex@brokemode.demo', demo: true, remember: true });
+
+function normalizeUser(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const email = sanitizeEmail(value.email);
+  const name = sanitizeText(value.name, 80);
+  if (!email || !name) return null;
+  return { name, email, demo: true, remember: value.remember !== false };
+}
 
 function readSession() {
-  if (typeof window === 'undefined') return defaultDemoUser;
+  if (typeof window === 'undefined') return null;
   try {
     const raw = window.localStorage.getItem(AUTH_KEY);
     if (raw === 'signed-out') {
       const session = window.sessionStorage.getItem(SESSION_KEY);
-      return session ? JSON.parse(session)?.user || null : null;
+      if (!session || session.length > 4096) return null;
+      return normalizeUser(JSON.parse(session)?.user);
     }
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    return parsed?.user || defaultDemoUser;
+    if (!raw || raw.length > 4096) return null;
+    return normalizeUser(JSON.parse(raw)?.user);
   } catch {
-    return defaultDemoUser;
+    try {
+      window.localStorage.removeItem(AUTH_KEY);
+      window.sessionStorage.removeItem(SESSION_KEY);
+    } catch { /* Storage may be unavailable. */ }
+    return null;
   }
 }
 
@@ -37,15 +50,20 @@ export function AuthProvider({ children }) {
         window.sessionStorage.removeItem(SESSION_KEY);
       }
     } catch {
-      // Session state remains in memory when browser storage is not available.
+      // The demo session stays in memory when browser storage is unavailable.
     }
   }, [user]);
 
   const value = useMemo(() => ({
     user,
     isAuthenticated: Boolean(user),
-    login: (email, name, remember = true) => setUser({ name: name || email?.split('@')[0] || 'BrokeMode member', email, demo: true, remember }),
-    exploreDemo: () => setUser(defaultDemoUser),
+    login: (emailInput, nameInput, remember = true) => {
+      const email = sanitizeEmail(emailInput);
+      const name = sanitizeText(nameInput || email?.split('@')[0] || 'BrokeMode member', 80);
+      if (!email || !name) return;
+      setUser({ name, email, demo: true, remember: remember !== false });
+    },
+    exploreDemo: () => setUser({ ...defaultDemoUser }),
     logout: () => setUser(null),
   }), [user]);
 

@@ -1,8 +1,8 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useId, useRef } from 'react';
 import { AlertCircle, Check, ChevronRight, LoaderCircle, X } from 'lucide-react';
 
 export function Button({ children, variant = 'primary', size = 'md', className = '', icon: Icon, iconRight: IconRight, loading = false, disabled = false, type = 'button', ...props }) {
-  return <button type={type} className={`btn btn-${variant} btn-${size} ${className}`.trim()} disabled={disabled || loading} {...props}>
+  return <button type={type} className={`btn btn-${variant} btn-${size} ${className}`.trim()} disabled={disabled || loading} aria-busy={loading || undefined} {...props}>
     {loading ? <LoaderCircle size={16} className="spin" /> : Icon ? <Icon size={16} strokeWidth={1.8} /> : null}
     <span>{children}</span>
     {IconRight ? <IconRight size={16} strokeWidth={1.8} /> : null}
@@ -51,10 +51,11 @@ export function MetricValue({ label, value, detail, trend, icon: Icon, tone = 'd
 }
 
 export function Field({ label, hint, error, required, className = '', children, ...props }) {
+  const errorId = useId();
   return <label className={`field ${className}`}>
     {label && <span className="field-label">{label}{required && <span className="required"> *</span>}</span>}
-    {children || <input className={`input ${error ? 'input-error' : ''}`} {...props} />}
-    {error ? <span className="field-error"><AlertCircle size={13} />{error}</span> : hint ? <span className="field-hint">{hint}</span> : null}
+    {children || <input {...props} className={`input ${error ? 'input-error' : ''}`} aria-invalid={error ? 'true' : props['aria-invalid']} aria-describedby={error ? errorId : props['aria-describedby']} />}
+    {error ? <span id={errorId} className="field-error" role="alert"><AlertCircle size={13} />{error}</span> : hint ? <span className="field-hint">{hint}</span> : null}
   </label>;
 }
 
@@ -69,39 +70,72 @@ export function SelectField({ label, options, className = '', ...props }) {
   </label>;
 }
 
-export function Modal({ open, title, subtitle, onClose, children, footer, width = 520, closeOnBackdrop = true }) {
-  const panelRef = useRef(null);
+const FOCUSABLE_SELECTOR = 'a[href],button:not([disabled]),input:not([disabled]):not([type="hidden"]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+
+export function useDialogFocus(open, onClose, panelRef, initialFocusSelector) {
   const onCloseRef = useRef(onClose);
   useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
   useEffect(() => {
-    if (!open) return undefined;
+    if (!open || !panelRef.current) return undefined;
+    const panel = panelRef.current;
     const previouslyFocused = document.activeElement;
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
+
+    const getFocusable = () => [...panel.querySelectorAll(FOCUSABLE_SELECTOR)].filter((element) => {
+      if (element.hidden || element.getAttribute('aria-hidden') === 'true') return false;
+      const style = window.getComputedStyle?.(element);
+      return style?.display !== 'none' && style?.visibility !== 'hidden';
+    });
     const onKeyDown = (event) => {
-      if (event.key === 'Escape') { onCloseRef.current?.(); return; }
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        event.stopPropagation();
+        onCloseRef.current?.();
+        return;
+      }
       if (event.key !== 'Tab') return;
-      const focusable = [...(panelRef.current?.querySelectorAll('a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])') || [])].filter((element) => !element.hasAttribute('hidden'));
-      if (!focusable.length) { event.preventDefault(); panelRef.current?.focus(); return; }
+      const focusable = getFocusable();
+      if (!focusable.length) {
+        event.preventDefault();
+        panel.focus();
+        return;
+      }
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
-      if (event.shiftKey && (document.activeElement === first || !panelRef.current?.contains(document.activeElement))) { event.preventDefault(); last.focus(); }
-      else if (!event.shiftKey && (document.activeElement === last || !panelRef.current?.contains(document.activeElement))) { event.preventDefault(); first.focus(); }
+      if (event.shiftKey && (document.activeElement === first || !panel.contains(document.activeElement))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (document.activeElement === last || !panel.contains(document.activeElement))) {
+        event.preventDefault();
+        first.focus();
+      }
     };
     window.addEventListener('keydown', onKeyDown);
-    const timer = window.setTimeout(() => panelRef.current?.querySelector('input,button,select,textarea')?.focus(), 40);
+    const timer = window.setTimeout(() => {
+      const initial = initialFocusSelector ? panel.querySelector(initialFocusSelector) : null;
+      (initial || getFocusable()[0] || panel).focus();
+    }, 0);
     return () => {
       window.removeEventListener('keydown', onKeyDown);
       window.clearTimeout(timer);
       document.body.style.overflow = originalOverflow;
-      previouslyFocused?.focus?.();
+      if (previouslyFocused?.isConnected && !previouslyFocused.disabled) previouslyFocused.focus?.();
     };
-  }, [open]);
+  }, [open, initialFocusSelector, panelRef]);
+}
+
+export function Modal({ open, title, subtitle, onClose, children, footer, width = 520, closeOnBackdrop = true }) {
+  const panelRef = useRef(null);
+  const dialogId = useId();
+  const titleId = `${dialogId}-title`;
+  const subtitleId = `${dialogId}-description`;
+  useDialogFocus(open, onClose, panelRef);
   if (!open) return null;
   return <div className="modal-backdrop" onMouseDown={(event) => { if (closeOnBackdrop && event.target === event.currentTarget) onClose?.(); }}>
-    <div className="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modal-title" ref={panelRef} style={{ maxWidth: width }}>
+    <div className="modal-panel" role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={subtitle ? subtitleId : undefined} ref={panelRef} tabIndex={-1} style={{ maxWidth: width }}>
       <div className="modal-header">
-        <div><h2 id="modal-title">{title}</h2>{subtitle && <p>{subtitle}</p>}</div>
+        <div><h2 id={titleId}>{title}</h2>{subtitle && <p id={subtitleId}>{subtitle}</p>}</div>
         <button className="icon-button modal-close" type="button" onClick={onClose} aria-label="Close dialog"><X size={17} /></button>
       </div>
       <div className="modal-body">{children}</div>

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { makeDemoState } from '../data/demoData.js';
-import { calculateFinance, getGoalStats, getBillOccurrences, makeDecisionScenario } from './calculations.js';
+import { buildDashboardForecast, calculateFinance, getGoalStats, getBillOccurrences, makeDecisionScenario } from './calculations.js';
 import { financeReducer, createInitialFinanceState } from '../reducer/financeReducer.js';
 import { filterTransactions, sortTransactions } from './transactionFilters.js';
 
@@ -20,6 +20,14 @@ describe('BrokeMode financial model', () => {
     expect(summary.upcomingCommitments).toBe(999);
     expect(summary.dailyAllowance).toBe(286);
     expect(summary.projectedMonthEndBalance).toBe(651);
+  });
+
+  it('keeps prototype-named categories as ordinary financial labels', () => {
+    const state = makeDemoState();
+    state.transactions = [expense('tx-prototype-label', 75, state.currentDate, '__proto__')];
+    const summary = calculateFinance(state);
+    expect(summary.categorySpending['__proto__']).toBe(75);
+    expect(Object.getPrototypeOf(summary.categorySpending)).toBeNull();
   });
 
   it('counts an expense once and reduces spendable balance once', () => {
@@ -136,6 +144,17 @@ describe('BrokeMode financial model', () => {
     expect(summary.projectedMonthEndBalance).toBeLessThan(0);
     expect(summary.risk.code).toBe('shortfall');
     expect(summary.risk.label).toBe('Shortfall risk');
+  });
+
+  it('builds a bounded month-long forecast with the correct actual/estimated boundary', () => {
+    const state = makeDemoState();
+    const summary = calculateFinance(state);
+    const forecast = buildDashboardForecast(state, summary);
+    expect(forecast).toHaveLength(30);
+    expect(forecast[11].actual).toBe(6450);
+    expect(forecast[11].forecast).toBe(6450);
+    expect(forecast[29].actual).toBeNull();
+    expect(forecast[29].forecast).toBe(651);
   });
 
   it('filters by free-text search, type, category and date, then sorts', () => {

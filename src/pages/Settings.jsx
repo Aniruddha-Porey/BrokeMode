@@ -5,18 +5,14 @@ import { useFinance } from '../context/FinanceContext.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { formatDate } from '../finance/formatters.js';
+import { sanitizeEmail, sanitizeText } from '../finance/validation.js';
+import { buildCsv } from '../utils/csv.js';
 import { ConfirmDialog, Field, PageHeading, Panel, SectionHeading, Toggle, Button } from '../components/ui/Primitives.jsx';
-
-function csvCell(value) {
-  const string = String(value ?? '');
-  return `"${string.replaceAll('"', '""')}"`;
-}
 
 function exportTransactions(transactions) {
   const headings = ['Date', 'Description', 'Category', 'Type', 'Amount (INR)', 'Status'];
-  const lines = [headings.map(csvCell).join(',')];
-  for (const item of transactions) lines.push([item.date, item.description, item.category, item.type, item.amount, item.status || 'cleared'].map(csvCell).join(','));
-  const blob = new Blob([`\uFEFF${lines.join('\r\n')}`], { type: 'text/csv;charset=utf-8' });
+  const rows = transactions.map((item) => [item.date, item.description, item.category, item.type, item.amount, item.status || 'cleared']);
+  const blob = new Blob([buildCsv(headings, rows)], { type: 'text/csv;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
   anchor.href = url;
@@ -24,7 +20,7 @@ function exportTransactions(transactions) {
   document.body.appendChild(anchor);
   anchor.click();
   anchor.remove();
-  URL.revokeObjectURL(url);
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
 function SettingsJump({ active, setActive }) {
@@ -34,7 +30,7 @@ function SettingsJump({ active, setActive }) {
     { id: 'simulation', label: 'Simulation', icon: Settings2 },
     { id: 'data', label: 'Data & account', icon: ShieldCheck },
   ];
-  return <nav className="settings-nav" aria-label="Settings sections">{links.map(({ id, label, icon: Icon }) => <button key={id} className={active === id ? 'active' : ''} onClick={() => { setActive(id); document.getElementById(`settings-${id}`)?.scrollIntoView?.({ behavior: 'smooth', block: 'start' }); }}><Icon size={15} /><span>{label}</span></button>)}</nav>;
+  return <nav className="settings-nav" aria-label="Settings sections">{links.map(({ id, label, icon: Icon }) => <button key={id} type="button" aria-current={active === id ? 'location' : undefined} className={active === id ? 'active' : ''} onClick={() => { setActive(id); const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches; document.getElementById(`settings-${id}`)?.scrollIntoView?.({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' }); }}><Icon size={15} /><span>{label}</span></button>)}</nav>;
 }
 
 export default function Settings() {
@@ -51,10 +47,12 @@ export default function Settings() {
 
   const saveProfile = (event) => {
     event.preventDefault();
-    if (!profileName.trim()) { setProfileError('Enter a name for your profile.'); return; }
-    if (!/^\S+@\S+\.\S+$/.test(profileEmail)) { setProfileError('Enter a valid email address.'); return; }
-    dispatch({ type: 'SET_PROFILE', profile: { name: profileName.trim(), email: profileEmail.trim() } });
-    login(profileEmail.trim(), profileName.trim());
+    const name = sanitizeText(profileName, 80);
+    const email = sanitizeEmail(profileEmail);
+    if (!name) { setProfileError('Enter a name for your profile.'); return; }
+    if (!email) { setProfileError('Enter a valid email address (up to 254 characters).'); return; }
+    dispatch({ type: 'SET_PROFILE', profile: { name, email } });
+    login(email, name);
     setProfileError('');
     toast('Profile preferences saved.');
   };
@@ -86,10 +84,10 @@ export default function Settings() {
           <SectionHeading title="Profile" detail="Personalize your workspace identity" />
           <form onSubmit={saveProfile}>
             <div className="settings-form-row">
-              <Field label="Display name" value={profileName} onChange={(event) => setProfileName(event.target.value)} placeholder="Your name" required />
-              <Field label="Email address" type="email" value={profileEmail} onChange={(event) => setProfileEmail(event.target.value)} placeholder="you@example.com" required />
+              <Field label="Display name" maxLength={80} value={profileName} onChange={(event) => setProfileName(event.target.value)} placeholder="Your name" required />
+              <Field label="Email address" type="email" maxLength={254} value={profileEmail} onChange={(event) => setProfileEmail(event.target.value)} placeholder="you@example.com" required />
             </div>
-            {profileError && <div className="field-error" style={{ marginTop: 9 }}>{profileError}</div>}
+            {profileError && <div className="field-error" role="alert" style={{ marginTop: 9 }}>{profileError}</div>}
             <div className="row-between" style={{ marginTop: 14 }}><span className="tiny-note">This profile is stored locally in the browser.</span><Button type="submit" size="sm" icon={Check}>Save profile</Button></div>
           </form>
         </Panel>

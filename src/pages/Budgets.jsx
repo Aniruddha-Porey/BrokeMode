@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { useFinance } from '../context/FinanceContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { formatCurrency, formatPercent } from '../finance/formatters.js';
+import { parseMoney } from '../finance/validation.js';
 import { CATEGORY_COLORS } from '../data/demoData.js';
 import { makeId } from '../utils/id.js';
 import { Button, Field, Modal, PageHeading, Panel, ProgressBar, SectionHeading } from '../components/ui/Primitives.jsx';
@@ -17,23 +18,25 @@ function estimateCategory(state, summary, category) {
   return Math.round(actual + futureVariable + futureCommitments);
 }
 
-function BudgetEditor({ open, budget, onClose, onSave }) {
+function BudgetEditor({ open, budget, onClose, onSave, existingCategories = [] }) {
   const [amount, setAmount] = useState(String(budget?.limit || ''));
   const [category, setCategory] = useState(budget?.category || '');
   const [error, setError] = useState('');
   const save = (event) => {
     event.preventDefault();
-    const limit = Math.round(Number(amount));
-    if (!Number.isFinite(limit) || limit < 1) { setError('Set a category budget of at least ₹1.'); return; }
-    if (budget?.isNew && !category.trim()) { setError('Add a name for this category.'); return; }
-    onSave({ ...budget, category: budget?.isNew ? category.trim() : budget.category, limit });
+    const limit = parseMoney(amount, { min: 1 });
+    if (limit === null) { setError('Set a whole-rupee budget between ₹1 and ₹1,00,00,00,000.'); return; }
+    const cleanCategory = category.trim().slice(0, 64);
+    if (budget?.isNew && !cleanCategory) { setError('Add a name for this category.'); return; }
+    if (budget?.isNew && existingCategories.some((item) => item.toLocaleLowerCase() === cleanCategory.toLocaleLowerCase())) { setError('A budget already exists for this category.'); return; }
+    onSave({ ...budget, category: budget?.isNew ? cleanCategory : budget.category, limit });
     onClose();
   };
   return <Modal open={open} onClose={onClose} title={budget?.isTotal ? 'Adjust challenge funds' : 'Adjust category budget'} subtitle={budget?.isTotal ? 'Change the starting amount available for this 30-day challenge.' : budget?.category ? `Change the planned amount for ${budget.category}.` : 'Set a planned amount for a new category.'} width={430} footer={<><Button variant="subtle" onClick={onClose}>Cancel</Button><Button type="submit" form="budget-editor-form">Save budget</Button></>}>
     <form id="budget-editor-form" onSubmit={save}>
-      {budget?.isNew && <Field label="Category name" value={category} onChange={(event) => setCategory(event.target.value)} placeholder="e.g. Pet care" required />}
-      <Field label={budget?.isTotal ? 'Starting challenge funds (INR)' : 'Planned amount (INR)'} type="number" min="1" step="1" value={amount} onChange={(event) => setAmount(event.target.value)} placeholder="0" required />
-      {error && <div className="field-error" style={{ marginTop: 9 }}>{error}</div>}
+      {budget?.isNew && <Field label="Category name" maxLength={64} value={category} onChange={(event) => setCategory(event.target.value)} placeholder="e.g. Pet care" required />}
+      <Field label={budget?.isTotal ? 'Starting challenge funds (INR)' : 'Planned amount (INR)'} type="number" min="1" max="1000000000" step="1" value={amount} onChange={(event) => setAmount(event.target.value)} placeholder="0" required />
+      {error && <div className="field-error" role="alert" style={{ marginTop: 9 }}>{error}</div>}
     </form>
   </Modal>;
 }
@@ -89,7 +92,7 @@ export default function Budgets() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 15 }}>
         <Panel>
           <SectionHeading title="Allocation mix" detail={`How ${formatCurrency(totalLimit)} is assigned`} />
-          <div className="progress-track" style={{ display: 'flex', height: 10, overflow: 'hidden', margin: '17px 0 15px' }} aria-label="Budget allocation by category">
+          <div className="progress-track" role="img" style={{ display: 'flex', height: 10, overflow: 'hidden', margin: '17px 0 15px' }} aria-label={`Budget allocation across ${allocatedSorted.length} categories; total ${formatCurrency(totalLimit)}`}>
             {allocatedSorted.map((item) => <span key={item.id} style={{ width: `${totalLimit ? item.limit / totalLimit * 100 : 0}%`, height: '100%', background: CATEGORY_COLORS[item.category] || '#9299AB', minWidth: item.limit ? 2 : 0 }} title={`${item.category}: ${formatCurrency(item.limit)}`} />)}
           </div>
           <div className="category-list">
@@ -106,7 +109,7 @@ export default function Budgets() {
         </Panel>
       </div>
     </div>
-    <BudgetEditor key={editing?.id || (editing?.isNew ? 'new-category' : 'closed')} open={Boolean(editing)} budget={editing} onClose={() => setEditing(null)} onSave={(budget) => {
+    <BudgetEditor key={editing?.id || (editing?.isNew ? 'new-category' : 'closed')} open={Boolean(editing)} budget={editing} existingCategories={state.budgets.map((item) => item.category)} onClose={() => setEditing(null)} onSave={(budget) => {
       if (budget.isTotal) {
         dispatch({ type: 'SET_STARTING_BUDGET', amount: budget.limit });
         setEditing(null);

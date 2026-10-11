@@ -30,7 +30,7 @@ function AuthBrand() {
 }
 
 export default function AuthLayout({ children }) {
-  return <div className="auth-layout"><AuthBrand /><main className="auth-form-panel"><div className="auth-form-container">
+  return <div className="auth-layout"><AuthBrand /><main id="main-content" className="auth-form-panel" tabIndex={-1}><div className="auth-form-container">
     <Link to="/" className="auth-mobile-brand" aria-label="BrokeMode home"><span className="brand-mark"><WalletCards size={18} /></span><span className="brand-word">Broke<span>Mode</span></span></Link>
     {children}
   </div></main></div>;

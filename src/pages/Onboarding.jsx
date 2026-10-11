@@ -31,8 +31,8 @@ export default function Onboarding() {
       <div className="brand"><span className="brand-mark"><Wallet size={17} /></span><span className="brand-copy"><span className="brand-word">Broke<span>Mode</span></span><span className="brand-caption">Survive the month</span></span></div>
       <span className="tiny-note">Step {step} of 3</span>
     </header>
-    <main className="onboarding-main">
-      <div className="onboarding-progress" aria-label={`Onboarding step ${step} of 3`}>{[1,2,3].map((number) => <span key={number} className={step >= number ? 'active' : ''} />)}</div>
+    <main id="main-content" className="onboarding-main" tabIndex={-1}>
+      <div className="onboarding-progress" role="group" aria-label={`Onboarding step ${step} of 3`}>{[1,2,3].map((number) => <span key={number} className={step >= number ? 'active' : ''} aria-hidden="true" />)}</div>
       {step === 1 && <>
         <div className="eyebrow">A SIMPLE, 30-DAY FINANCIAL CHALLENGE</div>
         <h1>One month. One clear picture.</h1>
@@ -73,6 +73,6 @@ export default function Onboarding() {
         {step < 3 ? <Button size="lg" iconRight={ArrowRight} onClick={continueToNext}>Continue</Button> : <Button variant="lime" size="lg" icon={Target} iconRight={ArrowRight} onClick={finish}>Start my challenge</Button>}
       </div>
     </main>
-    <footer className="auth-challenge-foot"><span>Survive the Month. Master Your Money.</span><button className="text-link" onClick={() => { dispatch({ type: 'COMPLETE_ONBOARDING', priority }); navigate('/dashboard'); }}>Skip for now</button></footer>
+    <footer className="auth-challenge-foot"><span>Survive the Month. Master Your Money.</span><button type="button" className="text-link" onClick={() => { dispatch({ type: 'COMPLETE_ONBOARDING', priority }); navigate('/dashboard'); }}>Skip for now</button></footer>
   </div>;
 }

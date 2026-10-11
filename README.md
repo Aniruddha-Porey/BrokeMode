@@ -20,9 +20,10 @@ Vite prints a local URL. For a hosted preview that needs network access, start t
 ### Other commands
 
 ```bash
-npm test       # Vitest + Testing Library
-npm run build  # production bundle in dist/
+npm test        # Vitest + Testing Library
+npm run build   # production bundle in dist/
 npm run preview # serve the production build locally
+npm run check   # tests followed by a production build
 ```
 
 ## Demo flows
@@ -72,11 +73,13 @@ The calculations are centralized in `src/finance/calculations.js` and are shared
 
 ## Tests and production build
 
-Tests cover the shared ledger/forecast semantics, goal transfers, bill occurrence/payment handling, Decision Lab preview/apply behavior, transaction filters, landing-to-demo entry, appearance preference persistence, sign-in validation, onboarding, route rendering, and a transaction entry flow.
+Tests cover shared ledger/forecast semantics, bounded and sanitized local persistence, invalid reducer actions, CSV formula-injection protection, goal transfers, bill occurrence/payment handling, Decision Lab preview/apply behavior, transaction filters, landing-to-demo entry, appearance persistence, fail-closed demo sessions, accessible modal focus/keyboard behavior, onboarding, route rendering, and transaction entry. User-authored text is length-limited, rendered as text (never HTML), and CSV cells are guarded against spreadsheet formula execution.
 
 ```bash
 npm test
 npm run build
+# or run both in sequence
+npm run check
 ```
 
 ## Deploy

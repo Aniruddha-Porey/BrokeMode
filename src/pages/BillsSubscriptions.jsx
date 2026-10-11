@@ -5,6 +5,7 @@ import { useFinance } from '../context/FinanceContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { formatCurrency, formatDate } from '../finance/formatters.js';
 import { getBillOccurrences } from '../finance/calculations.js';
+import { isISODate, parseMoney } from '../finance/validation.js';
 import { makeId } from '../utils/id.js';
 import { categoriesForState } from '../finance/categories.js';
 import { Badge, Button, ConfirmDialog, EmptyState, Field, Modal, PageHeading, Panel, SectionHeading, SelectField } from '../components/ui/Primitives.jsx';
@@ -16,10 +17,10 @@ function BillForm({ open, bill, state, onClose, onSave }) {
   const set = (key, value) => setForm((current) => ({ ...current, [key]: value }));
   const submit = (event) => {
     event.preventDefault();
-    const amount = Math.round(Number(form.amount));
+    const amount = parseMoney(form.amount, { min: 1 });
     if (!form.name.trim()) { setError('Add a name for this payment.'); return; }
-    if (!Number.isFinite(amount) || amount < 1) { setError('Enter an amount greater than ₹0.'); return; }
-    if (!form.nextDueDate) { setError('Choose the next due date.'); return; }
+    if (amount === null) { setError('Enter a whole-rupee amount between ₹1 and ₹1,00,00,00,000.'); return; }
+    if (!isISODate(form.nextDueDate)) { setError('Choose a valid next due date.'); return; }
     if (form.recurrence !== 'once' && form.status === 'pending') set('status', 'active');
     const recurrence = form.recurrence;
     onSave({ ...form, id: form.id || makeId('bill'), name: form.name.trim(), amount, recurrence, status: recurrence === 'once' ? (form.status === 'paid' ? 'paid' : 'pending') : (form.status === 'cancelled' ? 'cancelled' : 'active') });
@@ -28,14 +29,14 @@ function BillForm({ open, bill, state, onClose, onSave }) {
   return <Modal open={open} onClose={close} title={bill?.id ? 'Edit payment' : 'Add a bill or subscription'} subtitle="Forecasts include active payments due before the challenge ends. A payment is not counted again after it is recorded." width={540} footer={<><Button variant="subtle" onClick={close}>Cancel</Button><Button type="submit" form="bill-form">Save payment</Button></>}>
     <form id="bill-form" onSubmit={submit}>
       <div className="modal-form-grid">
-        <Field className="span-2" label="Name" value={form.name} onChange={(event) => set('name', event.target.value)} placeholder="e.g. Mobile plan" required />
-        <Field label="Amount (INR)" type="number" min="1" step="1" value={form.amount} onChange={(event) => set('amount', event.target.value)} placeholder="0" required />
+        <Field className="span-2" label="Name" maxLength={80} value={form.name} onChange={(event) => set('name', event.target.value)} placeholder="e.g. Mobile plan" required />
+        <Field label="Amount (INR)" type="number" min="1" max="1000000000" step="1" value={form.amount} onChange={(event) => set('amount', event.target.value)} placeholder="0" required />
         <SelectField label="Payment type" value={form.kind} onChange={(event) => set('kind', event.target.value)} options={[{ value: 'bill', label: 'Bill' }, { value: 'subscription', label: 'Subscription' }]} />
         <SelectField label="Category" value={form.category} onChange={(event) => set('category', event.target.value)} options={categoriesForState(state)} />
         <SelectField label="Recurrence" value={form.recurrence} onChange={(event) => set('recurrence', event.target.value)} options={[{ value: 'once', label: 'One-time' }, { value: 'weekly', label: 'Weekly' }, { value: 'monthly', label: 'Monthly' }, { value: 'yearly', label: 'Yearly' }]} />
         <Field className="span-2" label="Next due date" type="date" value={form.nextDueDate} onChange={(event) => set('nextDueDate', event.target.value)} required />
       </div>
-      {error && <div className="field-error" style={{ marginTop: 10 }}>{error}</div>}
+      {error && <div className="field-error" role="alert" style={{ marginTop: 10 }}>{error}</div>}
     </form>
   </Modal>;
 }

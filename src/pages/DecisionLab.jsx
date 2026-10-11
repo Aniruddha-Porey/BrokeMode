@@ -7,6 +7,7 @@ import { useFinance } from '../context/FinanceContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { calculateFinance, buildDecisionForecast, getBillOccurrences, getGoalStats, makeDecisionScenario } from '../finance/calculations.js';
 import { addDays } from '../finance/dates.js';
+import { isISODate, parseMoney } from '../finance/validation.js';
 import { formatCurrency, formatDate, formatSignedCurrency } from '../finance/formatters.js';
 import { categoriesForState } from '../finance/categories.js';
 import { makeId } from '../utils/id.js';
@@ -64,10 +65,10 @@ function DecisionBuilder({ state, onSimulate }) {
   const set = (key, value) => setForm((current) => ({ ...current, [key]: value }));
   const submit = (event) => {
     event.preventDefault();
-    const amount = Math.round(Number(form.amount));
+    const amount = parseMoney(form.amount, { min: 1, max: 1_000_000 });
     if (!form.description.trim()) { setError('Give this purchase a short description.'); return; }
-    if (!Number.isFinite(amount) || amount < 1) { setError('Enter a purchase amount greater than zero.'); return; }
-    if (amount > 1000000) { setError('For this demo, a single proposal must be below ₹10,00,000.'); return; }
+    if (amount === null) { setError('For this demo, a proposal must be a whole-rupee amount up to ₹10,00,000.'); return; }
+    if (form.recurrence === 'repeat' && (!isISODate(form.firstPaymentDate) || form.firstPaymentDate < state.currentDate)) { setError('Choose a valid first payment date on or after today.'); return; }
     setError('');
     onSimulate({
       kind: 'purchase', description: form.description.trim(), category: form.category, amount,
@@ -81,7 +82,7 @@ function DecisionBuilder({ state, onSimulate }) {
     <Panel>
       <div className="panel-title-row"><div><h2><span className="decision-step">01</span>Build your decision</h2><p>Try it here first. Nothing is recorded until you apply.</p></div><Badge tone="violet">PREVIEW ONLY</Badge></div>
       <form onSubmit={submit}>
-        <Field label="What are you thinking of buying?" placeholder="e.g. Headphones" value={form.description} onChange={(event) => set('description', event.target.value)} required />
+        <Field label="What are you thinking of buying?" maxLength={120} placeholder="e.g. Headphones" value={form.description} onChange={(event) => set('description', event.target.value)} required />
         <div style={{ height: 12 }} />
         <SelectField label="Category" value={form.category} onChange={(event) => set('category', event.target.value)} options={categoriesForState(state)} />
         <div style={{ height: 13 }} />
@@ -95,8 +96,8 @@ function DecisionBuilder({ state, onSimulate }) {
         <div style={{ marginTop: 14 }}>
           <div className="field-label" style={{ marginBottom: 6 }}>How often?</div>
           <div className="segmented-control segmented-full" role="group" aria-label="Purchase recurrence">
-            <button type="button" className={form.recurrence === 'once' ? 'selected' : ''} onClick={() => set('recurrence', 'once')}>One-time</button>
-            <button type="button" className={form.recurrence === 'repeat' ? 'selected' : ''} onClick={() => set('recurrence', 'repeat')}>Recurring</button>
+            <button type="button" aria-pressed={form.recurrence === 'once'} className={form.recurrence === 'once' ? 'selected' : ''} onClick={() => set('recurrence', 'once')}>One-time</button>
+            <button type="button" aria-pressed={form.recurrence === 'repeat'} className={form.recurrence === 'repeat' ? 'selected' : ''} onClick={() => set('recurrence', 'repeat')}>Recurring</button>
           </div>
         </div>
         {form.recurrence === 'repeat' && <div className="modal-form-grid" style={{ marginTop: 13 }}>
@@ -104,7 +105,7 @@ function DecisionBuilder({ state, onSimulate }) {
           <Field label="First payment" type="date" min={state.currentDate} value={form.firstPaymentDate} onChange={(event) => set('firstPaymentDate', event.target.value)} required />
         </div>}
         <div style={{ marginTop: 13 }}><SelectField label="Goal this could affect (optional)" value={form.goalId} onChange={(event) => set('goalId', event.target.value)} options={[{ value: '', label: 'No goal selected' }, ...state.goals.map((goal) => ({ value: goal.id, label: goal.name }))]} /></div>
-        {error && <div className="field-error" style={{ marginTop: 10 }}>{error}</div>}
+        {error && <div className="field-error" role="alert" style={{ marginTop: 10 }}>{error}</div>}
         <Button type="submit" className="simulate-button" icon={Sparkles} iconRight={ArrowRight}>Simulate this purchase</Button>
       </form>
       <div className="decision-summary-note"><Info size={12} style={{ display: 'inline', marginRight: 5, verticalAlign: '-2px' }} />Your real balance, transaction history, and savings goals stay untouched until you choose <strong>Apply decision</strong>.</div>

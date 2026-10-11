@@ -127,7 +127,7 @@ export function calculateFinance(state, scenario = null) {
   const rawDailyAllowance = availableAfterCommitments / daysRemainingInclusive;
   const dailyAllowance = Math.max(0, Math.floor(rawDailyAllowance));
   const allowanceShortfall = Math.max(0, Math.ceil(-availableAfterCommitments));
-  const categorySpending = {};
+  const categorySpending = Object.create(null);
   for (const transaction of transactions) {
     if (transaction.type !== 'expense') continue;
     const category = transaction.category || 'Other';
@@ -283,15 +283,16 @@ export function buildDashboardForecast(state, summary = calculateFinance(state))
   let projected = summary.spendableBalance;
   const occurrenceByDate = {};
   for (const occurrence of summary.upcomingOccurrences) occurrenceByDate[occurrence.date] = (occurrenceByDate[occurrence.date] || 0) + occurrence.amount;
-  const currentPoint = points.find((point) => point.day === summary.challengeDay);
+  const currentPoint = points[summary.challengeDay - 1];
   if (currentPoint) currentPoint.forecast = projected;
   for (let day = summary.challengeDay + 1; day <= state.durationDays; day += 1) {
     const date = addDays(state.challengeStartDate, day - 1);
     projected -= summary.dailyAverageSpending;
     projected -= occurrenceByDate[date] || 0;
-    const point = points.find((item) => item.day === day);
+    const point = points[day - 1];
     if (point) point.forecast = projected;
   }
+  if (points.length) points[points.length - 1].forecast = summary.projectedMonthEndBalance;
   return points;
 }
 
@@ -359,7 +360,9 @@ export function addDecisionToState(state, proposal) {
   const recurring = recurrence !== 'once';
   const description = String(proposal.description || 'Planned purchase').trim() || 'Planned purchase';
   const category = proposal.category || 'Other';
-  const id = `decision-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+  const id = typeof proposal.decisionId === 'string' && proposal.decisionId
+    ? proposal.decisionId
+    : `decision-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
   const firstDate = proposal.timing === 'wait' ? addDays(state.currentDate, 7) : (proposal.firstPaymentDate || state.currentDate);
   const dueNow = compareDates(firstDate, state.currentDate) <= 0;
   if (!dueNow) {

@@ -26,7 +26,7 @@ const yFormatter = (value) => {
 export function CashflowChart({ data, currentDay, height = 220 }) {
   return <div className="chart-wrapper" style={{ height }}>
     <ResponsiveContainer width="100%" height="100%">
-      <ComposedChart data={data} margin={{ top: 10, right: 8, bottom: 0, left: -8 }}>
+      <ComposedChart accessibilityLayer aria-label="Actual balance and estimated cash-flow through the challenge" data={data} margin={{ top: 10, right: 8, bottom: 0, left: -8 }}>
         <CartesianGrid stroke="var(--border)" strokeDasharray="2 5" vertical={false} />
         <XAxis dataKey="day" type="number" domain={[1, 'dataMax']} tickLine={false} axisLine={false} tick={{ fill: '#7D8497', fontSize: 9 }} tickFormatter={(value) => `D${value}`} interval={4} />
         <YAxis width={44} tickLine={false} axisLine={false} tick={{ fill: '#7D8497', fontSize: 9 }} tickFormatter={yFormatter} domain={['auto', 'auto']} />
@@ -44,7 +44,7 @@ export function CashflowChart({ data, currentDay, height = 220 }) {
 export function DecisionForecastChart({ data, currentDay, height = 166 }) {
   return <div className="scenario-chart" style={{ height }}>
     <ResponsiveContainer width="100%" height="100%">
-      <ComposedChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -8 }}>
+      <ComposedChart accessibilityLayer aria-label="Current plan compared with the proposed decision" data={data} margin={{ top: 8, right: 8, bottom: 0, left: -8 }}>
         <CartesianGrid stroke="var(--border)" strokeDasharray="2 5" vertical={false} />
         <XAxis dataKey="day" type="number" domain={[currentDay, 'dataMax']} tickLine={false} axisLine={false} tick={{ fill: '#7D8497', fontSize: 8 }} tickFormatter={(value) => `D${value}`} interval={3} />
         <YAxis width={42} tickLine={false} axisLine={false} tick={{ fill: '#7D8497', fontSize: 8 }} tickFormatter={yFormatter} domain={['auto', 'auto']} />

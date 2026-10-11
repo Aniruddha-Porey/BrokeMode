@@ -6,6 +6,7 @@ import { Button, Field } from '../components/ui/Primitives.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useFinance } from '../context/FinanceContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
+import { sanitizeEmail } from '../finance/validation.js';
 
 export default function Login() {
   const { login, exploreDemo } = useAuth();
@@ -21,8 +22,8 @@ export default function Login() {
 
   const submit = (event) => {
     event.preventDefault();
-    const email = form.email.trim();
-    if (!/^\S+@\S+\.\S+$/.test(email)) { setError('Enter a valid email address.'); return; }
+    const email = sanitizeEmail(form.email);
+    if (!email) { setError('Enter a valid email address.'); return; }
     if (form.password.length < 8) { setError('Use a password with at least 8 characters for this demo.'); return; }
     setError('');
     setLoading(true);
@@ -46,15 +47,15 @@ export default function Login() {
     <h2>Welcome back</h2>
     <p className="auth-intro">Pick up where your money left off.</p>
     {error && <div className="auth-error" role="alert"><CircleAlert size={14} />{error}</div>}
-    {forgotNotice && <div className="auth-demo-note" role="status" style={{ marginBottom: 12 }}>Password recovery is not connected in this local prototype. Try the demo flow with any valid email and an 8+ character password.</div>}
+    <div id="forgot-password-note" className="auth-demo-note" role="status" hidden={!forgotNotice} style={{ marginBottom: 12 }}>Password recovery is not connected in this local prototype. Try the demo flow with any valid email and an 8+ character password.</div>
     <form onSubmit={submit} noValidate>
       <div className="auth-fields">
-        <Field label="Email address" type="email" autoComplete="email" placeholder="you@example.com" value={form.email} onChange={(event) => set('email', event.target.value)} required />
-        <div className="field"><span className="field-label">Password</span><div className="password-wrap"><input className="input" type={showPassword ? 'text' : 'password'} autoComplete="current-password" placeholder="Enter your password" value={form.password} onChange={(event) => set('password', event.target.value)} required aria-label="Password" /><button className="icon-button password-toggle" type="button" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOff size={15} /> : <Eye size={15} />}</button></div></div>
+        <Field label="Email address" type="email" maxLength={254} autoComplete="email" placeholder="you@example.com" value={form.email} onChange={(event) => set('email', event.target.value)} required />
+        <div className="field"><label className="field-label" htmlFor="login-password">Password</label><div className="password-wrap"><input id="login-password" className="input" type={showPassword ? 'text' : 'password'} maxLength={128} autoComplete="current-password" placeholder="Enter your password" value={form.password} onChange={(event) => set('password', event.target.value)} required /><button className="icon-button password-toggle" type="button" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOff size={15} /> : <Eye size={15} />}</button></div></div>
       </div>
       <div className="auth-options">
         <label className="checkbox-row"><input type="checkbox" checked={form.remember} onChange={(event) => set('remember', event.target.checked)} />Remember me</label>
-        <button type="button" className="text-link" onClick={() => setForgotNotice((value) => !value)}>Forgot password?</button>
+        <button type="button" className="text-link" aria-expanded={forgotNotice} aria-controls="forgot-password-note" onClick={() => setForgotNotice((value) => !value)}>Forgot password?</button>
       </div>
       <Button type="submit" className="auth-submit" size="lg" loading={loading} iconRight={ArrowRight}>Sign in</Button>
     </form>
